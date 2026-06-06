@@ -1,0 +1,87 @@
+{
+  "name": "keyboardshortcut-explorer",
+  "displayName": "Keyboard Shortcuts",
+  "description": "Una fantastica estensione per esplorare le tue scorciatoie da tastiera",
+  "version": "1.0.0",
+  "publisher": "Gaetano-Taormina",
+  "icon": "assets/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gaetano-Taormina/KeyboardShortcut_Explorer.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./assets/js/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "KeyboardShortcut Explorer",
+      "properties": {
+        "keyboardshortcut-explorer.fontSize": {
+          "type": "number",
+          "default": 16,
+          "description": "Base font size for the shortcuts list."
+        },
+        "keyboardshortcut-explorer.accessibilityMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Dyslexia-friendly fonts, increased letter spacing, and high contrast."
+        },
+        "keyboardshortcut-explorer.bubbleColor": {
+          "type": "string",
+          "default": "var(--vscode-sideBar-background)",
+          "description": "CSS color for the chat bubble background (e.g. #2d2d2d or var(--vscode-sideBar-background))."
+        }
+      }
+    },
+    "views": {
+      "explorer": [
+        {
+          "type": "webview",
+          "id": "keyboardShortcutsView",
+          "name": "Keyboard Shortcuts",
+          "icon": "assets/icon.png"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "keyboardshortcut-explorer.filter",
+        "title": "Toggle Reorder Mode",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "keyboardshortcut-explorer.toggleSearch",
+        "title": "Toggle Search Bar"
+      },
+      {
+        "command": "keyboardshortcut-explorer.toggleExtensions",
+        "title": "Filter Extensions..."
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "keyboardshortcut-explorer.filter",
+          "when": "view == keyboardShortcutsView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "keyboardshortcut-explorer.toggleSearch",
+          "when": "view == keyboardShortcutsView",
+          "group": "1_more@1"
+        },
+        {
+          "command": "keyboardshortcut-explorer.toggleExtensions",
+          "when": "view == keyboardShortcutsView",
+          "group": "1_more@2"
+        }
+      ]
+    }
+  },
+  "activationEvents": []
+}
