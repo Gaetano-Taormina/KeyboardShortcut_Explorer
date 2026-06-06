@@ -47,9 +47,19 @@ class ShortcutsWebviewProvider {
         // 2. Leggiamo le preferenze che l'utente ha impostato nelle impostazioni (Settings)
         const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer');
         const settings = {
+            fontFamily: config.get('fontFamily'),
             fontSize: config.get('fontSize'),
+            keysFontSize: config.get('keysFontSize'),
+            titleFontSize: config.get('titleFontSize'),
+            textColor: config.get('textColor'),
+            titleBackgroundColor: config.get('titleBackgroundColor'),
+            keysBackgroundColor: config.get('keysBackgroundColor'),
+            bubbleColor: config.get('bubbleColor'),
+            scrollbarColor: config.get('scrollbarColor'),
             accessibilityMode: config.get('accessibilityMode'),
-            bubbleColor: config.get('bubbleColor')
+            dyslexiaFont: config.get('dyslexiaFont'),
+            dyslexiaBold: config.get('dyslexiaBold'),
+            dyslexiaLetterSpacing: config.get('dyslexiaLetterSpacing')
         };
 
         // 3. Recuperiamo le liste per il menù custom delle estensioni

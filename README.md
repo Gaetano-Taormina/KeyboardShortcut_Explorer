@@ -20,13 +20,28 @@ No special requirements. Works out-of-the-box with any VS Code setup.
 
 This extension contributes the following settings:
 
-- `keyboardshortcut-explorer.fontSize`: Adjust the font size of the shortcuts list.
-- `keyboardshortcut-explorer.bubbleColor`: Change the background color of the shortcut items.
-- `keyboardshortcut-explorer.accessibilityMode`: Enable a dyslexic-friendly reading mode.
+- `keyboardshortcut-explorer.fontFamily`: Change the general font family.
+- `keyboardshortcut-explorer.fontSize`: Adjust the base font size of the list.
+- `keyboardshortcut-explorer.keysFontSize`: Adjust the font size of the shortcut keys.
+- `keyboardshortcut-explorer.titleFontSize`: Adjust the font size of the category titles.
+- `keyboardshortcut-explorer.textColor`: Custom RGB color for text (or inherit from theme).
+- `keyboardshortcut-explorer.titleBackgroundColor`: Custom RGB background color for the category titles.
+- `keyboardshortcut-explorer.keysBackgroundColor`: Custom RGB background color for the keys.
+- `keyboardshortcut-explorer.bubbleColor`: Change the background color of the main shortcut container.
+- `keyboardshortcut-explorer.scrollbarColor`: Custom color for the vertical scrollbar.
+- `keyboardshortcut-explorer.accessibilityMode`: Enable Dyslexia-friendly mode.
+- `keyboardshortcut-explorer.dyslexiaFont`: Specify the font used when Dyslexia Mode is enabled.
+- `keyboardshortcut-explorer.dyslexiaBold`: Force bold text during Dyslexia Mode.
+- `keyboardshortcut-explorer.dyslexiaLetterSpacing`: Adjust letter spacing during Dyslexia Mode.
 
 ## Release Notes
 
-### 1.0.0
+### 1.0.2
+
+- **Full Customization Update**: Added extensive styling settings! Customize font families, change specific font sizes (keys, titles), and apply custom RGB colors to texts, title backgrounds, key backgrounds, and the scrollbar.
+- **Improved Accessibility**: Dyslexia mode settings are now separated, allowing you to freely choose the font, letter spacing, and bold forcing independently.
+
+### 1.0.1
 
 Initial release of KeyboardShortcut Explorer! Features include sorting, search, pinning, drag and drop, and more.
 
