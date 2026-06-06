@@ -2,8 +2,8 @@
   "name": "keyboardshortcut-explorer",
   "displayName": "Keyboard Shortcuts",
   "description": "Una fantastica estensione per esplorare le tue scorciatoie da tastiera",
-  "version": "1.0.0",
-  "publisher": "Gaetano-Taormina",
+  "version": "1.0.2",
+  "publisher": "GaetanoTaormina",
   "icon": "assets/icon.png",
   "repository": {
     "type": "git",
@@ -21,20 +21,70 @@
     "configuration": {
       "title": "KeyboardShortcut Explorer",
       "properties": {
+        "keyboardshortcut-explorer.fontFamily": {
+          "type": "string",
+          "default": "var(--vscode-font-family)",
+          "description": "General font family for the interface."
+        },
         "keyboardshortcut-explorer.fontSize": {
           "type": "number",
           "default": 16,
           "description": "Base font size for the shortcuts list."
         },
-        "keyboardshortcut-explorer.accessibilityMode": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable Dyslexia-friendly fonts, increased letter spacing, and high contrast."
+        "keyboardshortcut-explorer.keysFontSize": {
+          "type": "number",
+          "default": 14,
+          "description": "Font size for the shortcut keys."
+        },
+        "keyboardshortcut-explorer.titleFontSize": {
+          "type": "number",
+          "default": 16,
+          "description": "Font size for the category titles."
+        },
+        "keyboardshortcut-explorer.textColor": {
+          "type": "string",
+          "default": "var(--vscode-foreground)",
+          "description": "General text color (e.g. #ffffff)."
+        },
+        "keyboardshortcut-explorer.titleBackgroundColor": {
+          "type": "string",
+          "default": "var(--vscode-editor-inactiveSelectionBackground)",
+          "description": "Background color for the category titles (e.g. rgb(50, 50, 50))."
+        },
+        "keyboardshortcut-explorer.keysBackgroundColor": {
+          "type": "string",
+          "default": "var(--vscode-textCodeBlock-background)",
+          "description": "Background color for the shortcut keys box."
         },
         "keyboardshortcut-explorer.bubbleColor": {
           "type": "string",
           "default": "var(--vscode-sideBar-background)",
           "description": "CSS color for the chat bubble background (e.g. #2d2d2d or var(--vscode-sideBar-background))."
+        },
+        "keyboardshortcut-explorer.scrollbarColor": {
+          "type": "string",
+          "default": "var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4))",
+          "description": "Color of the vertical scrollbar thumb."
+        },
+        "keyboardshortcut-explorer.accessibilityMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Dyslexia Mode."
+        },
+        "keyboardshortcut-explorer.dyslexiaFont": {
+          "type": "string",
+          "default": "'Comic Sans MS', 'OpenDyslexic', 'Trebuchet MS', sans-serif",
+          "description": "Font family used when Dyslexia Mode is enabled."
+        },
+        "keyboardshortcut-explorer.dyslexiaBold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force bold text in Dyslexia Mode."
+        },
+        "keyboardshortcut-explorer.dyslexiaLetterSpacing": {
+          "type": "string",
+          "default": "0.08em",
+          "description": "Letter spacing when Dyslexia Mode is enabled."
         }
       }
     },
