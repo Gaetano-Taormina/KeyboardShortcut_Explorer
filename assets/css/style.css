@@ -1,6 +1,6 @@
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--vscode-foreground);
+            font-family: var(--setting-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
+            color: var(--setting-text-color, var(--vscode-foreground));
             background-color: transparent;
             padding: 4px;
             margin: 0;
@@ -12,12 +12,18 @@
 
         /* Accessibility Mode */
         body.dyslexia-mode {
-            font-family: 'Comic Sans MS', 'OpenDyslexic', 'Trebuchet MS', sans-serif !important;
-            letter-spacing: 0.08em !important;
+            font-family: var(--setting-dyslexia-font, 'Comic Sans MS', 'OpenDyslexic', 'Trebuchet MS', sans-serif) !important;
+            letter-spacing: var(--setting-dyslexia-spacing, 0.08em) !important;
             line-height: 2 !important;
         }
+        body.dyslexia-bold {
+            font-weight: bold !important;
+        }
+        body.dyslexia-bold .shortcut-keys {
+            font-weight: 900 !important;
+        }
         body.dyslexia-mode .shortcut-keys {
-            font-size: calc(var(--setting-font-size, 16px) + 2px) !important;
+            font-size: calc(var(--setting-keys-font-size, 14px) + 2px) !important;
             border: 2px solid var(--vscode-focusBorder) !important;
         }
 
@@ -39,10 +45,10 @@
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: transparent;
+            background: var(--vscode-sideBar-background);
         }
         ::-webkit-scrollbar-thumb {
-            background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));
+            background: var(--setting-scrollbar-color, rgba(121, 121, 121, 0.4));
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
@@ -131,11 +137,11 @@
         }
         
         summary.category {
-            font-size: 1.05em;
+            font-size: var(--setting-title-font-size, 1.05em);
             font-weight: 700;
             text-transform: uppercase;
             color: var(--vscode-sideBarSectionHeader-foreground);
-            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            background-color: var(--setting-title-bg, var(--vscode-editor-inactiveSelectionBackground));
             padding: 8px 12px;
             border-radius: 6px;
             cursor: pointer;
@@ -219,9 +225,9 @@
         }
         .shortcut-keys {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9em;
+            font-size: var(--setting-keys-font-size, 0.9em);
             color: var(--vscode-textPreformat-foreground);
-            background-color: var(--vscode-textCodeBlock-background);
+            background-color: var(--setting-keys-bg, var(--vscode-textCodeBlock-background));
             padding: 4px 8px;
             border-radius: 6px;
             display: inline-block;

@@ -29,15 +29,32 @@
         function applySettings(settings) {
             if (!settings) return;
             
-            // Usiamo il CSS per cambiare dinamicamente font e colori
+            // Variabili CSS per le personalizzazioni utente
+            document.documentElement.style.setProperty('--setting-font-family', settings.fontFamily);
             document.documentElement.style.setProperty('--setting-font-size', settings.fontSize + 'px');
+            document.documentElement.style.setProperty('--setting-keys-font-size', settings.keysFontSize + 'px');
+            document.documentElement.style.setProperty('--setting-title-font-size', settings.titleFontSize + 'px');
+            document.documentElement.style.setProperty('--setting-text-color', settings.textColor);
+            document.documentElement.style.setProperty('--setting-title-bg', settings.titleBackgroundColor);
+            document.documentElement.style.setProperty('--setting-keys-bg', settings.keysBackgroundColor);
             document.documentElement.style.setProperty('--setting-bubble-color', settings.bubbleColor);
+            document.documentElement.style.setProperty('--setting-scrollbar-color', settings.scrollbarColor);
+            
+            // Impostazioni Dislessia
+            document.documentElement.style.setProperty('--setting-dyslexia-font', settings.dyslexiaFont);
+            document.documentElement.style.setProperty('--setting-dyslexia-spacing', settings.dyslexiaLetterSpacing);
             
             // Se l'utente ha attivato la modalità accessibilità, aggiungiamo una classe CSS speciale
             if (settings.accessibilityMode) {
                 document.body.classList.add('dyslexia-mode');
+                if (settings.dyslexiaBold) {
+                    document.body.classList.add('dyslexia-bold');
+                } else {
+                    document.body.classList.remove('dyslexia-bold');
+                }
             } else {
                 document.body.classList.remove('dyslexia-mode');
+                document.body.classList.remove('dyslexia-bold');
             }
         }
 
@@ -440,7 +457,13 @@
                     
                     const boxTesto = document.createElement('div');
                     boxTesto.className = 'shortcut-command';
-                    boxTesto.textContent = shortcut.command;
+                    
+                    // Taglia i punti e prende solo la parola finale della funzione
+                    const commandParts = shortcut.command.split('.');
+                    boxTesto.textContent = commandParts[commandParts.length - 1];
+                    
+                    // Aggiunge la versione completa come tooltip (titolo) al passaggio del mouse
+                    boxTesto.title = shortcut.command;
                     
                     rigaShortcut.appendChild(boxTasti);
                     rigaShortcut.appendChild(boxTesto);
