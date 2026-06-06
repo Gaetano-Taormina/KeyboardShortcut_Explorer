@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Shortcuts</title>
+    <link rel="stylesheet" href="{{styleUri}}">
+</head>
+<body>
+
+    <div class="search-container">
+        <div class="search-input-wrapper">
+            <input type="text" id="searchInput" placeholder="Search (e.g. Save, Ctrl+S)..." />
+            <button id="toggle-all-btn" class="toggle-all-btn" title="Espandi/Comprimi Tutto">
+                <!-- Folder Icon -->
+                <svg id="folder-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M14.5 4h-6l-1-1H2.5l-.5.5v9l.5.5h12l.5-.5v-8l-.5-.5zM14 13H3V5h11v8z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+    <div id="shortcuts-container"></div>
+    <div id="no-results">Nessun risultato trovato</div>
+    
+    <div id="custom-context-menu" class="hidden"></div>
+
+    <script>
+        // INJECTED_DATA will be replaced by the extension before serving the HTML
+        const INJECTED_DATA = null;
+        const INJECTED_SETTINGS = null;
+        const INJECTED_HIDDEN_EXTENSIONS = null;
+        const INJECTED_AVAILABLE_EXTENSIONS = null;
+    </script>
+    <script src="{{scriptUri}}"></script>
+</body>
+</html>
