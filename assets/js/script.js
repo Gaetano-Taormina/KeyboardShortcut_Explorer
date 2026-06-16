@@ -15,9 +15,16 @@
         // Riferimenti al Custom Menu
         const customMenu = document.getElementById('custom-context-menu');
 
-        // Carichiamo dalla memoria del browser le preferenze di ordinamento
-        let categoryOrder = JSON.parse(localStorage.getItem('categoryOrder')) || [];
-        let pinnedCategories = JSON.parse(localStorage.getItem('pinnedCategories')) || [];
+        // Carichiamo le preferenze di ordinamento inviate dal backend
+        let categoryOrder = [];
+        if (typeof INJECTED_CATEGORY_ORDER !== 'undefined' && INJECTED_CATEGORY_ORDER) {
+            categoryOrder = INJECTED_CATEGORY_ORDER;
+        }
+        
+        let pinnedCategories = [];
+        if (typeof INJECTED_PINNED_CATEGORIES !== 'undefined' && INJECTED_PINNED_CATEGORIES) {
+            pinnedCategories = INJECTED_PINNED_CATEGORIES;
+        }
         
         // Liste estensioni ricevute dal backend
         let hiddenExtensions = [];
@@ -34,11 +41,61 @@
             document.documentElement.style.setProperty('--setting-font-size', settings.fontSize + 'px');
             document.documentElement.style.setProperty('--setting-keys-font-size', settings.keysFontSize + 'px');
             document.documentElement.style.setProperty('--setting-title-font-size', settings.titleFontSize + 'px');
-            document.documentElement.style.setProperty('--setting-text-color', settings.textColor);
-            document.documentElement.style.setProperty('--setting-title-bg', settings.titleBackgroundColor);
-            document.documentElement.style.setProperty('--setting-keys-bg', settings.keysBackgroundColor);
-            document.documentElement.style.setProperty('--setting-bubble-color', settings.bubbleColor);
-            document.documentElement.style.setProperty('--setting-scrollbar-color', settings.scrollbarColor);
+            // Appearance Mode handling
+            // We can add a class to body to enforce basic dark/light if the user wants an override
+            // VS Code typically handles this, but if we need to force it, we could apply filters
+            if (settings.appearanceMode === "Dark") {
+                document.body.style.colorScheme = "dark";
+                document.body.classList.add("force-dark");
+                document.body.classList.remove("force-light", "force-hc");
+            } else if (settings.appearanceMode === "Light") {
+                document.body.style.colorScheme = "light";
+                document.body.classList.add("force-light");
+                document.body.classList.remove("force-dark", "force-hc");
+            } else if (settings.appearanceMode === "High Contrast") {
+                document.body.classList.add("force-hc");
+                document.body.classList.remove("force-dark", "force-light");
+            } else {
+                document.body.style.colorScheme = "auto";
+                document.body.classList.remove("force-dark", "force-light", "force-hc");
+            }
+
+            // Color Profile handling
+            if (settings.colorProfile === "Alternative 1") {
+                // Esempio: Accents / Vibrant
+                document.documentElement.style.setProperty('--setting-text-color', 'var(--vscode-foreground)');
+                document.documentElement.style.setProperty('--setting-title-bg', 'var(--vscode-button-background)');
+                document.documentElement.style.setProperty('--setting-keys-bg', 'var(--vscode-textPreformat-foreground)');
+                document.documentElement.style.setProperty('--setting-bubble-color', 'var(--vscode-sideBar-background)');
+                document.documentElement.style.setProperty('--setting-scrollbar-color', 'var(--vscode-scrollbarSlider-background)');
+            } else if (settings.colorProfile === "Alternative 2") {
+                // Esempio: Minimal / Terminal
+                document.documentElement.style.setProperty('--setting-text-color', 'var(--vscode-terminal-foreground)');
+                document.documentElement.style.setProperty('--setting-title-bg', 'var(--vscode-terminal-background)');
+                document.documentElement.style.setProperty('--setting-keys-bg', 'var(--vscode-terminal-border)');
+                document.documentElement.style.setProperty('--setting-bubble-color', 'var(--vscode-terminal-background)');
+                document.documentElement.style.setProperty('--setting-scrollbar-color', 'var(--vscode-scrollbarSlider-background)');
+            } else if (settings.colorProfile === "Custom") {
+                document.documentElement.style.setProperty('--setting-text-color', settings.textColor);
+                document.documentElement.style.setProperty('--setting-title-bg', settings.titleBackgroundColor);
+                document.documentElement.style.setProperty('--setting-keys-bg', settings.keysBackgroundColor);
+                document.documentElement.style.setProperty('--setting-bubble-color', settings.bubbleColor);
+                document.documentElement.style.setProperty('--setting-scrollbar-color', settings.scrollbarColor);
+            } else { // "VS Code Native"
+                document.documentElement.style.setProperty('--setting-text-color', 'var(--vscode-foreground)');
+                document.documentElement.style.setProperty('--setting-title-bg', 'var(--vscode-editor-inactiveSelectionBackground)');
+                document.documentElement.style.setProperty('--setting-keys-bg', 'var(--vscode-textCodeBlock-background)');
+                document.documentElement.style.setProperty('--setting-bubble-color', 'var(--vscode-sideBar-background)');
+                document.documentElement.style.setProperty('--setting-scrollbar-color', 'var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4))');
+            }
+
+            // Zebra striping handling
+            if (settings.alternateRowColors) {
+                document.body.classList.add('use-zebra-stripes');
+                document.documentElement.style.setProperty('--setting-alternate-row-color', settings.alternateRowColor);
+            } else {
+                document.body.classList.remove('use-zebra-stripes');
+            }
             
             // Impostazioni Dislessia
             document.documentElement.style.setProperty('--setting-dyslexia-font', settings.dyslexiaFont);
@@ -76,6 +133,25 @@
             availableExtensions = INJECTED_AVAILABLE_EXTENSIONS;
         }
         
+        if (typeof INJECTED_BUILTIN_EXTENSIONS !== 'undefined' && INJECTED_BUILTIN_EXTENSIONS) {
+            builtInExtensions = INJECTED_BUILTIN_EXTENSIONS;
+        }
+
+        // Gestione disclaimer di aggiornamento
+        if (typeof INJECTED_SHOW_DISCLAIMER !== 'undefined' && INJECTED_SHOW_DISCLAIMER) {
+            const disclaimer = document.getElementById('restart-disclaimer');
+            if (disclaimer) {
+                disclaimer.classList.remove('hidden');
+                const closeBtn = document.getElementById('close-disclaimer');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => {
+                        disclaimer.classList.add('hidden');
+                        vscode.postMessage({ command: 'dismissDisclaimer', version: INJECTED_VERSION });
+                    });
+                }
+            }
+        }
+        
         // Prima renderizzazione
         renderShortcuts();
 
@@ -105,101 +181,180 @@
         /**
          * Logica del Custom Context Menu (Filtro Estensioni)
          */
-        function toggleCustomMenuLogic() {
-            const isHidden = customMenu.classList.contains('hidden');
+        function renderCustomMenu() {
+            // Costruiamo il menu dinamicamente
+            customMenu.innerHTML = '';
             
-            if (isHidden) {
-                // Costruiamo il menu dinamicamente
-                customMenu.innerHTML = '';
+            if (availableExtensions.length === 0) {
+                const emptyItem = document.createElement('div');
+                emptyItem.className = 'context-menu-item';
+                emptyItem.textContent = 'Nessuna estensione rilevata';
+                customMenu.appendChild(emptyItem);
+            } else {
+                // Dividiamo le estensioni in Sistema e Utente
+                const sysExts = availableExtensions.filter(e => builtInExtensions.includes(e));
+                const usrExts = availableExtensions.filter(e => !builtInExtensions.includes(e));
                 
-                if (availableExtensions.length === 0) {
-                    const emptyItem = document.createElement('div');
-                    emptyItem.className = 'context-menu-item';
-                    emptyItem.textContent = 'Nessuna estensione rilevata';
-                    customMenu.appendChild(emptyItem);
-                } else {
-                    // --- Header: Seleziona Tutti / Deseleziona Tutti ---
-                    const headerRow = document.createElement('div');
-                    headerRow.style.display = 'flex';
-                    headerRow.style.justifyContent = 'space-between';
-                    headerRow.style.padding = '4px 8px';
-                    headerRow.style.borderBottom = '1px solid var(--vscode-menu-border)';
-                    headerRow.style.marginBottom = '4px';
+                // Funzione per creare l'header della categoria con Bulk Toggle
+                function createCategoryHeader(labelStr, extensionsList, parentItem) {
+                    const header = document.createElement('div');
+                    header.className = 'context-menu-header';
                     
-                    const selectAllBtn = document.createElement('button');
-                    selectAllBtn.className = 'reorder-btn';
-                    selectAllBtn.style.fontSize = '11px';
-                    selectAllBtn.textContent = 'Seleziona Tutte';
-                    selectAllBtn.onclick = (ev) => {
-                        ev.stopPropagation();
-                        hiddenExtensions = []; // Nessuna estensione nascosta
-                        vscode.postMessage({ command: 'updateHiddenExtensions', hiddenList: hiddenExtensions });
-                        toggleCustomMenuLogic(); // Ridisegna il menu
-                        renderShortcuts();       // Ridisegna gli shortcut
-                    };
-
-                    const deselectAllBtn = document.createElement('button');
-                    deselectAllBtn.className = 'reorder-btn';
-                    deselectAllBtn.style.fontSize = '11px';
-                    deselectAllBtn.textContent = 'Deseleziona Tutte';
-                    deselectAllBtn.onclick = (ev) => {
-                        ev.stopPropagation();
-                        hiddenExtensions = [...availableExtensions]; // Tutte le estensioni nascoste
-                        vscode.postMessage({ command: 'updateHiddenExtensions', hiddenList: hiddenExtensions });
-                        toggleCustomMenuLogic(); // Ridisegna il menu
-                        renderShortcuts();       // Ridisegna gli shortcut
-                    };
-
-                    headerRow.appendChild(selectAllBtn);
-                    headerRow.appendChild(deselectAllBtn);
-                    customMenu.appendChild(headerRow);
+                    const checkmark = document.createElement('div');
+                    checkmark.className = 'context-menu-check bulk-toggle';
+                    // Determiniamo se tutte le estensioni in questa lista sono visibili
+                    const allVisible = extensionsList.length > 0 && extensionsList.every(ext => !hiddenExtensions.includes(ext));
+                    const someVisible = extensionsList.some(ext => !hiddenExtensions.includes(ext));
                     
-                    // --- Lista delle Estensioni ---
-                    availableExtensions.forEach(ext => {
-                        const item = document.createElement('div');
-                        item.className = 'context-menu-item';
-                        
-                        const isVisible = !hiddenExtensions.includes(ext);
-                        
-                        const checkmark = document.createElement('div');
-                        checkmark.className = 'context-menu-check';
-                        checkmark.innerHTML = isVisible ? '✓' : '';
-                        
-                        const label = document.createElement('div');
-                        label.className = 'context-menu-label';
-                        label.textContent = ext;
-                        
-                        item.appendChild(checkmark);
-                        item.appendChild(label);
-                        
-                        item.addEventListener('click', (ev) => {
-                            ev.stopPropagation();
-                            const isCurrentlyHidden = hiddenExtensions.includes(ext);
-                            
-                            if (isCurrentlyHidden) {
-                                // Era nascosta, ora la mostriamo (togliamola da hiddenExtensions)
-                                hiddenExtensions = hiddenExtensions.filter(e => e !== ext);
-                                checkmark.innerHTML = '✓';
-                            } else {
-                                // Era visibile, ora la nascondiamo
-                                hiddenExtensions.push(ext);
-                                checkmark.innerHTML = '';
-                            }
-                            
-                            // Inviamo l'aggiornamento al backend per salvare la preferenza
-                            vscode.postMessage({
-                                command: 'updateHiddenExtensions',
-                                hiddenList: hiddenExtensions
+                    if (allVisible) {
+                        checkmark.innerHTML = '✓';
+                    } else if (someVisible) {
+                        checkmark.innerHTML = '■';
+                    } else {
+                        checkmark.innerHTML = '';
+                    }
+                    
+                    const label = document.createElement('div');
+                    label.className = 'context-menu-label';
+                    label.textContent = labelStr;
+                    label.title = labelStr; // tooltip per testi lunghi
+                    
+                    const arrow = document.createElement('div');
+                    arrow.className = 'submenu-arrow';
+                    arrow.innerHTML = '▶';
+                    
+                    // Cliccando sul checkmark o sul testo, selezioniamo/deselezioniamo tutte le estensioni
+                    function toggleBulk(ev) {
+                        ev.stopPropagation(); // Evitiamo di aprire/chiudere l'accordion
+                        if (allVisible) {
+                            // Nascondiamo tutte
+                            extensionsList.forEach(ext => {
+                                if (!hiddenExtensions.includes(ext)) hiddenExtensions.push(ext);
                             });
+                        } else {
+                            // Mostriamo tutte (rimuoviamo da hiddenExtensions)
+                            hiddenExtensions = hiddenExtensions.filter(ext => !extensionsList.includes(ext));
+                        }
+                        vscode.postMessage({ command: 'updateHiddenExtensions', hiddenList: hiddenExtensions });
+                        // Lasciamo il menu com'era (aperto o chiuso)
+                        const wasOpen = parentItem.classList.contains('open');
+                        renderCustomMenu(); // Solo ri-render, NON toggle (che lo chiuderebbe)
+                        renderShortcuts();
+                        // Ripristiniamo lo stato aperto/chiuso
+                        const newParent = Array.from(document.querySelectorAll('.context-menu-label')).find(l => l.textContent === labelStr)?.closest('.context-menu-item');
+                        if (wasOpen && newParent) newParent.classList.add('open');
+                    }
+
+                    checkmark.addEventListener('click', toggleBulk);
+                    label.addEventListener('click', toggleBulk);
+                    
+                    // Cliccando la freccina si apre l'accordion
+                    arrow.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        parentItem.classList.toggle('open');
+                    });
+                    
+                    // Cliccando nell'area vuota della riga facciamo aprire
+                    header.addEventListener('click', (ev) => {
+                        if (ev.target === header) {
+                            ev.stopPropagation();
+                            parentItem.classList.toggle('open');
+                        }
+                    });
+                    
+                    header.appendChild(checkmark);
+                    header.appendChild(label);
+                    header.appendChild(arrow);
+                    return header;
+                }
+
+                    // Funzione per creare gli elementi figli nel sottomenu
+                    function createSubmenuItems(extensionsList, parentItem) {
+                        const submenu = document.createElement('div');
+                        submenu.className = 'context-menu-submenu';
+                        
+                        if (extensionsList.length === 0) {
+                            parentItem.classList.add('empty-submenu');
+                            return submenu;
+                        }
+
+                        extensionsList.forEach(ext => {
+                            const item = document.createElement('div');
+                            item.className = 'context-menu-item';
                             
-                            // Aggiorniamo subito la vista principale
-                            renderShortcuts();
+                            const isVisible = !hiddenExtensions.includes(ext);
+                            
+                            const checkmark = document.createElement('div');
+                            checkmark.className = 'context-menu-check';
+                            checkmark.innerHTML = isVisible ? '✓' : '';
+                            
+                            const label = document.createElement('div');
+                            label.className = 'context-menu-label';
+                            label.textContent = ext;
+                            label.title = ext; // tooltip al passaggio del mouse
+                            
+                            item.appendChild(checkmark);
+                            item.appendChild(label);
+                            
+                            item.addEventListener('click', (ev) => {
+                                ev.stopPropagation();
+                                const isCurrentlyHidden = hiddenExtensions.includes(ext);
+                                
+                                if (isCurrentlyHidden) {
+                                    hiddenExtensions = hiddenExtensions.filter(e => e !== ext);
+                                    checkmark.innerHTML = '✓';
+                                } else {
+                                    hiddenExtensions.push(ext);
+                                    checkmark.innerHTML = '';
+                                }
+                                
+                                vscode.postMessage({
+                                    command: 'updateHiddenExtensions',
+                                    hiddenList: hiddenExtensions
+                                });
+                                
+                                const wasSystemOpen = systemItem.classList.contains('open');
+                                const wasUserOpen = userItem.classList.contains('open');
+                                
+                                renderCustomMenu();
+                                renderShortcuts();
+                                
+                                // Restore states
+                                const allLabels = Array.from(document.querySelectorAll('.context-menu-label'));
+                                const newSys = allLabels.find(l => l.textContent === 'System')?.closest('.context-menu-item');
+                                const newUsr = allLabels.find(l => l.textContent === 'Extensions')?.closest('.context-menu-item');
+                                if (wasSystemOpen && newSys) newSys.classList.add('open');
+                                if (wasUserOpen && newUsr) newUsr.classList.add('open');
+                            });
+                            submenu.appendChild(item);
                         });
                         
-                        customMenu.appendChild(item);
-                    });
+                        return submenu;
+                    }
+
+                    // --- Voce: System ---
+                    var systemItem = document.createElement('div');
+                    systemItem.className = 'context-menu-item has-submenu';
+                    const systemHeader = createCategoryHeader('System', sysExts, systemItem);
+                    const systemSubmenu = createSubmenuItems(sysExts, systemItem);
+                    systemItem.appendChild(systemHeader);
+                    systemItem.appendChild(systemSubmenu);
+                    customMenu.appendChild(systemItem);
+                    
+                    // --- Voce: Extensions ---
+                    var userItem = document.createElement('div');
+                    userItem.className = 'context-menu-item has-submenu';
+                    const userHeader = createCategoryHeader('Extensions', usrExts, userItem);
+                    const userSubmenu = createSubmenuItems(usrExts, userItem);
+                    userItem.appendChild(userHeader);
+                    userItem.appendChild(userSubmenu);
+                    customMenu.appendChild(userItem);
                 }
-                
+        }
+
+        function toggleCustomMenuLogic() {
+            if (customMenu.classList.contains('hidden')) {
+                renderCustomMenu();
                 customMenu.classList.remove('hidden');
             } else {
                 customMenu.classList.add('hidden');
@@ -235,10 +390,81 @@
         });
 
         /**
-         * Logica della Barra di Ricerca
+         * Funzioni di supporto per la Ricerca Avanzata
+         */
+        function normalizeText(text) {
+            return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        }
+
+        const synonymMap = {
+            'copi': 'copy', 'copia': 'copy', 'copiar': 'copy', 'copier': 'copy', 'kopieren': 'copy', 'копи': 'copy',
+            'incoll': 'paste', 'incolla': 'paste', 'pegar': 'paste', 'coller': 'paste', 'einfugen': 'paste',
+            'tagli': 'cut', 'taglia': 'cut', 'cortar': 'cut', 'couper': 'cut', 'schneiden': 'cut',
+            'salv': 'save', 'salva': 'save', 'guardar': 'save', 'sauvegarder': 'save', 'speichern': 'save',
+            'trov': 'find', 'trova': 'find', 'cerc': 'find', 'cerca': 'find', 'buscar': 'find', 'trouver': 'find', 'suchen': 'find',
+            'sostituisci': 'replace', 'reemplazar': 'replace', 'remplacer': 'replace', 'ersetzen': 'replace',
+            'apri': 'open', 'aprire': 'open', 'abrir': 'open', 'ouvrir': 'open', 'offnen': 'open',
+            'chiudi': 'close', 'chiudere': 'close', 'cerrar': 'close', 'fermer': 'close', 'schliessen': 'close',
+            'seleziona': 'select', 'seleccionar': 'select', 'selectionner': 'select', 'auswahlen': 'select',
+            'terminale': 'terminal', 'terminal': 'terminal'
+        };
+
+        function getSynonyms(text) {
+            let results = [text];
+            for (const [key, value] of Object.entries(synonymMap)) {
+                if (text.includes(key) && !results.includes(value)) {
+                    results.push(value);
+                }
+            }
+            return results;
+        }
+
+        function levenshtein(a, b) {
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+            for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+                        );
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
+        function fuzzyMatch(searchTerm, targetString) {
+            if (targetString.includes(searchTerm)) return true;
+            if (searchTerm.length < 3) return false;
+            
+            const words = targetString.split(/[\.\-\s_]/);
+            for (const word of words) {
+                if (word.length < 3) continue;
+                const maxErrors = word.length <= 5 ? 1 : 2;
+                if (levenshtein(searchTerm, word) <= maxErrors) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Logica della Barra di Ricerca Avanzata
          */
         searchInput.addEventListener('input', (event) => {
-            const testDaCercare = event.target.value.toLowerCase();
+            let rawTesto = event.target.value;
+            let testoPulito = normalizeText(rawTesto);
+            
+            // Otteniamo il testo originale + eventuali traduzioni
+            const terminiDaCercare = getSynonyms(testoPulito);
+
             const tuttiGliElementi = document.querySelectorAll('.shortcut-item');
             const tuttiIGruppi = document.querySelectorAll('.category-group');
             
@@ -249,30 +475,45 @@
                 const comando = elemento.getAttribute('data-command').toLowerCase();
                 const tasti = elemento.getAttribute('data-keys').toLowerCase();
                 
-                if (comando.includes(testDaCercare) || tasti.includes(testDaCercare)) {
+                let isMatch = false;
+                
+                for (const term of terminiDaCercare) {
+                    // Cerca per keys
+                    if (tasti.includes(term)) {
+                        isMatch = true;
+                        break;
+                    }
+                    
+                    // Cerca per comando con Fuzzy Logic
+                    if (fuzzyMatch(term, comando)) {
+                        isMatch = true;
+                        break;
+                    }
+                }
+                
+                if (isMatch) {
                     elemento.classList.remove('hidden'); // Mostralo
                 } else {
                     elemento.classList.add('hidden'); // Nascondilo
                 }
             });
 
-            // Filtriamo i gruppi (se un gruppo non ha più elementi visibili, nascondiamo tutto il gruppo)
+            // Filtriamo i gruppi
             tuttiIGruppi.forEach(gruppo => {
                 const elementiAncoraVisibili = gruppo.querySelectorAll('.shortcut-item:not(.hidden)');
                 if (elementiAncoraVisibili.length === 0) {
                     gruppo.classList.add('hidden');
                 } else {
                     gruppo.classList.remove('hidden');
-                    // Se stiamo cercando qualcosa, apriamo automaticamente la tendina del gruppo
-                    if (testDaCercare.length > 0) {
+                    if (rawTesto.length > 0) {
                         gruppo.open = true;
                     }
                     elementiVisibiliTotali += elementiAncoraVisibili.length;
                 }
             });
 
-            // Se non c'è nulla, mostriamo la scritta "Nessun risultato"
-            noResults.style.display = elementiVisibiliTotali === 0 ? 'block' : 'none';
+            // Mostriamo la scritta "Nessun risultato"
+            noResults.style.display = elementiVisibiliTotali === 0 && rawTesto.length > 0 ? 'block' : 'none';
         });
 
         /**
@@ -302,16 +543,16 @@
         }
 
         /**
-         * Salvataggi in memoria locale (LocalStorage) per non perdere le impostazioni al riavvio
+         * Salvataggio persistente inviando i dati al backend di VS Code (globalState)
          */
         function saveOrder() {
             const gruppi = Array.from(document.querySelectorAll('.category-group'));
             categoryOrder = gruppi.map(g => g.getAttribute('data-category'));
-            localStorage.setItem('categoryOrder', JSON.stringify(categoryOrder));
+            vscode.postMessage({ command: 'updateCategoryOrder', orderList: categoryOrder });
         }
         
         function savePins() {
-            localStorage.setItem('pinnedCategories', JSON.stringify(pinnedCategories));
+            vscode.postMessage({ command: 'updatePinnedCategories', pinnedList: pinnedCategories });
         }
 
         /**
@@ -326,11 +567,8 @@
             
             categorieOrdinate.forEach(nomeCategoria => {
                 // Filtro locale: se è un'estensione ed è nascosta, la saltiamo
-                if (nomeCategoria.startsWith('Extension: ')) {
-                    const extName = nomeCategoria.replace('Extension: ', '');
-                    if (hiddenExtensions.includes(extName)) {
-                        return;
-                    }
+                if (hiddenExtensions.includes(nomeCategoria)) {
+                    return;
                 }
                 
                 // Creiamo il contenitore del gruppo (il tag HTML <details> crea una tendina apribile)
@@ -486,12 +724,16 @@
         let justDragged = false;
 
         function setupDragAndDrop(elementoHTML) {
-            // Quando iniziamo a trascinare
             elementoHTML.addEventListener('dragstart', function(e) {
                 if (this.classList.contains('pinned')) {
                     e.preventDefault(); // Le categorie Pinned non si toccano!
                     return;
                 }
+                
+                // Salviamo lo stato e chiudiamo la tendina per rendere il blocco "leggero" e facile da trascinare
+                this.dataset.wasOpen = this.open;
+                this.open = false;
+                
                 elementoTrascinato = this;
                 setTimeout(() => this.classList.add('dragging'), 0);
             });
@@ -499,6 +741,12 @@
             // Quando rilasciamo
             elementoHTML.addEventListener('dragend', function() {
                 this.classList.remove('dragging');
+                
+                // Ripristiniamo la tendina se era aperta
+                if (this.dataset.wasOpen === 'true') {
+                    this.open = true;
+                }
+                
                 if (elementoTrascinato) {
                     justDragged = true;
                     setTimeout(() => justDragged = false, 100);
