@@ -24,9 +24,13 @@ This extension contributes the following settings:
 - `keyboardshortcut-explorer.fontSize`: Adjust the base font size of the list.
 - `keyboardshortcut-explorer.keysFontSize`: Adjust the font size of the shortcut keys.
 - `keyboardshortcut-explorer.titleFontSize`: Adjust the font size of the category titles.
-- `keyboardshortcut-explorer.textColor`: Custom RGB color for text (or inherit from theme).
-- `keyboardshortcut-explorer.titleBackgroundColor`: Custom RGB background color for the category titles.
-- `keyboardshortcut-explorer.keysBackgroundColor`: Custom RGB background color for the keys.
+- `keyboardshortcut-explorer.colorProfile`: Choose from different color combinations (VS Code Native, Alternative 1, Alternative 2, Custom) to remix how UI elements pull colors from your theme.
+- `keyboardshortcut-explorer.appearanceMode`: Force the overall look to Auto, Dark, Light, or High Contrast.
+- `keyboardshortcut-explorer.alternateRowColors`: Enable alternating row colors (zebra striping) for better readability.
+- `keyboardshortcut-explorer.alternateRowColor`: Custom color for the alternating rows.
+- `keyboardshortcut-explorer.textColor`: Custom RGB/Hex color for text (or inherit from theme).
+- `keyboardshortcut-explorer.titleBackgroundColor`: Custom RGB/Hex background color for the category titles.
+- `keyboardshortcut-explorer.keysBackgroundColor`: Custom RGB/Hex background color for the keys.
 - `keyboardshortcut-explorer.bubbleColor`: Change the background color of the main shortcut container.
 - `keyboardshortcut-explorer.scrollbarColor`: Custom color for the vertical scrollbar.
 - `keyboardshortcut-explorer.accessibilityMode`: Enable Dyslexia-friendly mode.
@@ -35,6 +39,14 @@ This extension contributes the following settings:
 - `keyboardshortcut-explorer.dyslexiaLetterSpacing`: Adjust letter spacing during Dyslexia Mode.
 
 ## Release Notes
+
+### 1.0.3
+
+- **Color Profiles & Color Pickers**: Introduced Color Profiles to quickly remix UI element colors using native VS Code semantic variables. Individual color settings now support native VS Code Color Pickers!
+- **Appearance Mode Control**: Force the extension to render in Light, Dark, or High Contrast modes independently from your main VS Code theme.
+- **Zebra Striping**: Added a setting to enable/disable alternating row colors for better list readability.
+- **Cleaner Default View**: By default, third-party extensions are now hidden when the extension is first loaded, ensuring a clean and focused "System Only" view.
+- **Update Banners**: The extension now displays a dismissible update banner within the UI whenever a new version with structural changes is installed.
 
 ### 1.0.2
 

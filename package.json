@@ -1,8 +1,8 @@
 {
   "name": "keyboardshortcut-explorer",
   "displayName": "Keyboard Shortcuts",
-  "description": "Una fantastica estensione per esplorare le tue scorciatoie da tastiera",
-  "version": "1.0.2",
+  "description": "A fantastic extension to explore your keyboard shortcuts",
+  "version": "1.0.3",
   "publisher": "GaetanoTaormina",
   "icon": "assets/icon.png",
   "repository": {
@@ -41,29 +41,57 @@
           "default": 16,
           "description": "Font size for the category titles."
         },
+        "keyboardshortcut-explorer.colorProfile": {
+          "type": "string",
+          "enum": ["VS Code Native", "Alternative 1", "Alternative 2", "Custom"],
+          "default": "VS Code Native",
+          "description": "Choose a color profile to change where UI elements get their colors from. Switches to Custom if manual colors are edited."
+        },
+        "keyboardshortcut-explorer.appearanceMode": {
+          "type": "string",
+          "enum": ["Auto", "Dark", "Light", "High Contrast"],
+          "default": "Auto",
+          "description": "Force the overall appearance mode. This is independent of the color profile."
+        },
+        "keyboardshortcut-explorer.alternateRowColors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable alternating row colors (zebra striping) for shortcut items."
+        },
+        "keyboardshortcut-explorer.alternateRowColor": {
+          "type": "string",
+          "format": "color-hex",
+          "default": "#82828210",
+          "description": "Color for the alternating rows when enabled."
+        },
         "keyboardshortcut-explorer.textColor": {
           "type": "string",
-          "default": "var(--vscode-foreground)",
-          "description": "General text color (e.g. #ffffff)."
+          "format": "color-hex",
+          "default": "#cccccc",
+          "description": "General text color."
         },
         "keyboardshortcut-explorer.titleBackgroundColor": {
           "type": "string",
-          "default": "var(--vscode-editor-inactiveSelectionBackground)",
-          "description": "Background color for the category titles (e.g. rgb(50, 50, 50))."
+          "format": "color-hex",
+          "default": "#323232",
+          "description": "Background color for the category titles."
         },
         "keyboardshortcut-explorer.keysBackgroundColor": {
           "type": "string",
-          "default": "var(--vscode-textCodeBlock-background)",
+          "format": "color-hex",
+          "default": "#2b2b2b",
           "description": "Background color for the shortcut keys box."
         },
         "keyboardshortcut-explorer.bubbleColor": {
           "type": "string",
-          "default": "var(--vscode-sideBar-background)",
-          "description": "CSS color for the chat bubble background (e.g. #2d2d2d or var(--vscode-sideBar-background))."
+          "format": "color-hex",
+          "default": "#252526",
+          "description": "Color for the chat bubble background."
         },
         "keyboardshortcut-explorer.scrollbarColor": {
           "type": "string",
-          "default": "var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4))",
+          "format": "color-hex",
+          "default": "#79797966",
           "description": "Color of the vertical scrollbar thumb."
         },
         "keyboardshortcut-explorer.accessibilityMode": {
@@ -110,7 +138,12 @@
       },
       {
         "command": "keyboardshortcut-explorer.toggleExtensions",
-        "title": "Filter Extensions..."
+        "title": "Customize View..."
+      },
+      {
+        "command": "keyboardshortcut-explorer.openKeybindings",
+        "title": "Open Keyboard Shortcuts Table",
+        "icon": "$(keyboard)"
       }
     ],
     "menus": {
@@ -119,6 +152,11 @@
           "command": "keyboardshortcut-explorer.filter",
           "when": "view == keyboardShortcutsView",
           "group": "navigation@3"
+        },
+        {
+          "command": "keyboardshortcut-explorer.openKeybindings",
+          "when": "view == keyboardShortcutsView",
+          "group": "navigation@2"
         },
         {
           "command": "keyboardshortcut-explorer.toggleSearch",
