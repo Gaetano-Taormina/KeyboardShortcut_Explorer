@@ -142,7 +142,7 @@ class ShortcutsWebviewProvider {
         const availableExtensions = this._availableExtensions;
 
         // Update Disclaimer management
-        let currentVersion = "1.0.4";
+        let currentVersion = "1.0.5";
         try {
             const packageJsonPath = path.join(this._extensionUri.fsPath, 'package.json');
             const packageJsonData = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
@@ -154,13 +154,13 @@ class ShortcutsWebviewProvider {
         const showDisclaimer = lastVersion !== currentVersion;
 
         // 4. Prepare safe links (URI) for our CSS and JS files
-        const stylePath = vscode.Uri.joinPath(this._extensionUri, 'assets', 'css', 'style.css');
-        const scriptPath = vscode.Uri.joinPath(this._extensionUri, 'assets', 'js', 'script.js');
+        const stylePath = vscode.Uri.joinPath(this._extensionUri, 'webview', 'style.css');
+        const scriptPath = vscode.Uri.joinPath(this._extensionUri, 'webview', 'script.js');
         const styleUri = this._view.webview.asWebviewUri(stylePath);
         const scriptUri = this._view.webview.asWebviewUri(scriptPath);
 
         // 5. Read the index.html file which contains the "skeleton" of the interface
-        const htmlPath = vscode.Uri.joinPath(this._extensionUri, 'index.html');
+        const htmlPath = vscode.Uri.joinPath(this._extensionUri, 'webview', 'index.html');
         let htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
         
         // Inject our real data into the HTML replacing placeholder variables
@@ -172,7 +172,7 @@ class ShortcutsWebviewProvider {
         htmlContent = htmlContent.replace('const INJECTED_PINNED_CATEGORIES = null;', `const INJECTED_PINNED_CATEGORIES = ${JSON.stringify(pinnedCategories)};`);
         htmlContent = htmlContent.replace('const INJECTED_CATEGORY_ORDER = null;', `const INJECTED_CATEGORY_ORDER = ${JSON.stringify(categoryOrder)};`);
         htmlContent = htmlContent.replace('const INJECTED_SHOW_DISCLAIMER = false;', `const INJECTED_SHOW_DISCLAIMER = ${showDisclaimer};`);
-        htmlContent = htmlContent.replace('const INJECTED_VERSION = "1.0.4";', `const INJECTED_VERSION = "${currentVersion}";`);
+        htmlContent = htmlContent.replace('const INJECTED_VERSION = "1.0.5";', `const INJECTED_VERSION = "${currentVersion}";`);
         htmlContent = htmlContent.replace('{{styleUri}}', styleUri.toString());
         htmlContent = htmlContent.replace('{{scriptUri}}', scriptUri.toString());
         
