@@ -39,6 +39,10 @@ This extension contributes the following settings:
 
 ## Release Notes
 
+### 1.0.5
+
+- **Repository Refactoring**: Complete reorganization of the extension source code into a clean, standard structure (`src/`, `webview/`, `media/`) for better maintainability. This update does not alter any existing functionality.
+
 ### 1.0.4
 
 - **Complete English Translation**: The entire extension is now fully translated and localized in English.

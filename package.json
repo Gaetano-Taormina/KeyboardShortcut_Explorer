@@ -2,21 +2,21 @@
   "name": "keyboardshortcut-explorer",
   "displayName": "Keyboard Shortcuts",
   "description": "A fantastic extension to explore your keyboard shortcuts",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "publisher": "GaetanoTaormina",
-  "icon": "assets/icon.png",
+  "icon": "media/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Gaetano-Taormina/KeyboardShortcut_Explorer.git"
   },
   "license": "MIT",
   "engines": {
-    "vscode": "^1.80.0"
+    "vscode": "^1.60.0"
   },
   "categories": [
     "Other"
   ],
-  "main": "./assets/js/extension.js",
+  "main": "./src/extension.js",
   "contributes": {
     "configuration": {
       "title": "KeyboardShortcut Explorer",
