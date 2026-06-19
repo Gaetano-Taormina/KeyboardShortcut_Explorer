@@ -2,7 +2,7 @@
   "name": "keyboardshortcut-explorer",
   "displayName": "Keyboard Shortcuts",
   "description": "A fantastic extension to explore your keyboard shortcuts",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publisher": "GaetanoTaormina",
   "icon": "assets/icon.png",
   "repository": {
@@ -21,95 +21,107 @@
     "configuration": {
       "title": "KeyboardShortcut Explorer",
       "properties": {
-        "keyboardshortcut-explorer.fontFamily": {
+        "keyboardshortcut-explorer.appearance.appearanceMode": {
           "type": "string",
-          "default": "var(--vscode-font-family)",
-          "description": "General font family for the interface."
+          "enum": ["Native", "Dark", "Light", "High Contrast"],
+          "default": "Native",
+          "description": "Force the overall appearance mode. 'Native' uses the current VS Code theme."
         },
-        "keyboardshortcut-explorer.fontSize": {
-          "type": "number",
-          "default": 16,
-          "description": "Base font size for the shortcuts list."
-        },
-        "keyboardshortcut-explorer.keysFontSize": {
-          "type": "number",
-          "default": 14,
-          "description": "Font size for the shortcut keys."
-        },
-        "keyboardshortcut-explorer.titleFontSize": {
-          "type": "number",
-          "default": 16,
-          "description": "Font size for the category titles."
-        },
-        "keyboardshortcut-explorer.colorProfile": {
-          "type": "string",
-          "enum": ["VS Code Native", "Alternative 1", "Alternative 2", "Custom"],
-          "default": "VS Code Native",
-          "description": "Choose a color profile to change where UI elements get their colors from. Switches to Custom if manual colors are edited."
-        },
-        "keyboardshortcut-explorer.appearanceMode": {
-          "type": "string",
-          "enum": ["Auto", "Dark", "Light", "High Contrast"],
-          "default": "Auto",
-          "description": "Force the overall appearance mode. This is independent of the color profile."
-        },
-        "keyboardshortcut-explorer.alternateRowColors": {
+        "keyboardshortcut-explorer.appearance.alternateRowColors": {
           "type": "boolean",
           "default": true,
           "description": "Enable alternating row colors (zebra striping) for shortcut items."
         },
-        "keyboardshortcut-explorer.alternateRowColor": {
+        "keyboardshortcut-explorer.colors.colorProfile": {
           "type": "string",
-          "format": "color-hex",
-          "default": "#82828210",
-          "description": "Color for the alternating rows when enabled."
+          "enum": ["VS Code Native", "Alternative 1", "Alternative 2", "Custom"],
+          "default": "VS Code Native",
+          "description": "Choose a color profile. Switches to Custom if manual colors are edited."
         },
-        "keyboardshortcut-explorer.textColor": {
+        "keyboardshortcut-explorer.colors.textColor": {
           "type": "string",
           "format": "color-hex",
-          "default": "#cccccc",
+          "default": "#09090B",
           "description": "General text color."
         },
-        "keyboardshortcut-explorer.titleBackgroundColor": {
+        "keyboardshortcut-explorer.colors.titleBackgroundColor": {
           "type": "string",
           "format": "color-hex",
-          "default": "#323232",
+          "default": "#0C0E0C",
           "description": "Background color for the category titles."
         },
-        "keyboardshortcut-explorer.keysBackgroundColor": {
+        "keyboardshortcut-explorer.colors.keysBackgroundColor": {
           "type": "string",
           "format": "color-hex",
-          "default": "#2b2b2b",
+          "default": "#050505",
           "description": "Background color for the shortcut keys box."
         },
-        "keyboardshortcut-explorer.bubbleColor": {
+        "keyboardshortcut-explorer.colors.bubbleColor": {
           "type": "string",
           "format": "color-hex",
-          "default": "#252526",
+          "default": "#080708",
           "description": "Color for the chat bubble background."
         },
-        "keyboardshortcut-explorer.scrollbarColor": {
+        "keyboardshortcut-explorer.colors.searchbarBackgroundColor": {
+          "type": "string",
+          "format": "color-hex",
+          "default": "#4F6287",
+          "description": "Background color for the search bar."
+        },
+        "keyboardshortcut-explorer.colors.searchbarTextColor": {
+          "type": "string",
+          "format": "color-hex",
+          "default": "#0A0A0B",
+          "description": "Text color for the search bar."
+        },
+        "keyboardshortcut-explorer.colors.scrollbarColor": {
           "type": "string",
           "format": "color-hex",
           "default": "#79797966",
-          "description": "Color of the vertical scrollbar thumb."
+          "description": "Color of the vertical scrollbar thumb. Supports opacity via 8-digit hex."
         },
-        "keyboardshortcut-explorer.accessibilityMode": {
+        "keyboardshortcut-explorer.colors.alternateRowColor": {
+          "type": "string",
+          "format": "color-hex",
+          "default": "#405444",
+          "description": "Color for the alternating rows when enabled."
+        },
+        "keyboardshortcut-explorer.typography.fontFamily": {
+          "type": "string",
+          "default": "var(--vscode-font-family)",
+          "description": "General font family for the interface."
+        },
+        "keyboardshortcut-explorer.typography.fontSize": {
+          "type": "number",
+          "default": 13,
+          "description": "Base font size for the shortcuts list (command names)."
+        },
+        "keyboardshortcut-explorer.typography.titleFontSize": {
+          "type": "number",
+          "default": 15,
+          "description": "Font size for the category titles."
+        },
+        "keyboardshortcut-explorer.typography.keysFontSize": {
+          "type": "number",
+          "default": 11,
+          "description": "Font size for the shortcut keys."
+        },
+        "keyboardshortcut-explorer.accessibility.accessibilityMode": {
           "type": "boolean",
           "default": false,
           "description": "Enable Dyslexia Mode."
         },
-        "keyboardshortcut-explorer.dyslexiaFont": {
+        "keyboardshortcut-explorer.accessibility.dyslexiaFont": {
           "type": "string",
           "default": "'Comic Sans MS', 'OpenDyslexic', 'Trebuchet MS', sans-serif",
           "description": "Font family used when Dyslexia Mode is enabled."
         },
-        "keyboardshortcut-explorer.dyslexiaBold": {
+        "keyboardshortcut-explorer.accessibility.dyslexiaBold": {
           "type": "boolean",
           "default": false,
           "description": "Force bold text in Dyslexia Mode."
         },
-        "keyboardshortcut-explorer.dyslexiaLetterSpacing": {
+        "keyboardshortcut-explorer.accessibility.dyslexiaLetterSpacing": {
           "type": "string",
           "default": "0.08em",
           "description": "Letter spacing when Dyslexia Mode is enabled."
@@ -128,35 +140,40 @@
     },
     "commands": [
       {
-        "command": "keyboardshortcut-explorer.filter",
-        "title": "Toggle Reorder Mode",
-        "icon": "$(filter)"
-      },
-      {
         "command": "keyboardshortcut-explorer.toggleSearch",
-        "title": "Toggle Search Bar"
+        "title": "Toggle Search Bar",
+        "icon": "$(search)"
       },
       {
         "command": "keyboardshortcut-explorer.toggleExtensions",
         "title": "Customize View..."
       },
       {
+        "command": "keyboardshortcut-explorer.openSettings",
+        "title": "Settings Editor",
+        "icon": "$(gear)"
+      },
+      {
         "command": "keyboardshortcut-explorer.openKeybindings",
         "title": "Open Keyboard Shortcuts Table",
         "icon": "$(keyboard)"
+      },
+      {
+        "command": "keyboardshortcut-explorer.openColorPicker",
+        "title": "Color Theme Editor"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "keyboardshortcut-explorer.filter",
-          "when": "view == keyboardShortcutsView",
-          "group": "navigation@3"
-        },
-        {
           "command": "keyboardshortcut-explorer.openKeybindings",
           "when": "view == keyboardShortcutsView",
           "group": "navigation@2"
+        },
+        {
+          "command": "keyboardshortcut-explorer.openSettings",
+          "when": "view == keyboardShortcutsView",
+          "group": "1_more@2"
         },
         {
           "command": "keyboardshortcut-explorer.toggleSearch",
@@ -167,6 +184,11 @@
           "command": "keyboardshortcut-explorer.toggleExtensions",
           "when": "view == keyboardShortcutsView",
           "group": "1_more@2"
+        },
+        {
+          "command": "keyboardshortcut-explorer.openColorPicker",
+          "when": "view == keyboardShortcutsView",
+          "group": "1_more@3"
         }
       ]
     }

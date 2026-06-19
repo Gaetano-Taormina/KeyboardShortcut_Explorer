@@ -32,13 +32,19 @@ This extension contributes the following settings:
 - `keyboardshortcut-explorer.titleBackgroundColor`: Custom RGB/Hex background color for the category titles.
 - `keyboardshortcut-explorer.keysBackgroundColor`: Custom RGB/Hex background color for the keys.
 - `keyboardshortcut-explorer.bubbleColor`: Change the background color of the main shortcut container.
-- `keyboardshortcut-explorer.scrollbarColor`: Custom color for the vertical scrollbar.
 - `keyboardshortcut-explorer.accessibilityMode`: Enable Dyslexia-friendly mode.
 - `keyboardshortcut-explorer.dyslexiaFont`: Specify the font used when Dyslexia Mode is enabled.
 - `keyboardshortcut-explorer.dyslexiaBold`: Force bold text during Dyslexia Mode.
 - `keyboardshortcut-explorer.dyslexiaLetterSpacing`: Adjust letter spacing during Dyslexia Mode.
 
 ## Release Notes
+
+### 1.0.4
+
+- **Complete English Translation**: The entire extension is now fully translated and localized in English.
+- **Color Theme Editor Redesign**: The color editor UI is now more compact and utilizes a responsive 2-column grid layout, ensuring all settings fit perfectly on screen.
+- **Zebra Striping Fix**: Addressed an issue where custom color profiles applied incorrect default colors for alternate rows.
+- **Scrollbar Styling Removed**: Custom scrollbar styling was removed for better stability within the VS Code Webview environment.
 
 ### 1.0.3
 
