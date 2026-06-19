@@ -1,7 +1,7 @@
         body {
             font-family: var(--setting-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
             color: var(--setting-text-color, var(--vscode-foreground));
-            background-color: transparent;
+            background-color: var(--vscode-sideBar-background); /* Fix: ora il tema forzato si applica a tutto lo sfondo */
             padding: 4px;
             margin: 0;
             overflow-x: hidden;
@@ -69,14 +69,13 @@
         
         #custom-context-menu {
             position: fixed;
-            top: 10px;
-            right: 10px;
+            top: 40px; /* Spostato sotto la barra di ricerca */
+            left: 10px; /* Ancorato a sinistra */
+            right: 10px; /* Ancorato a destra, così non sfora mai lo schermo! */
             background-color: var(--vscode-menu-background, #252526);
             border: 1px solid var(--vscode-menu-border, #454545);
             border-radius: 6px;
             padding: 4px;
-            min-width: 200px;
-            max-width: 90vw;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             z-index: 1000;
         }
@@ -165,10 +164,10 @@
             width: 100%;
             padding: 4px 8px; /* Padding ridotto per farla più stretta */
             box-sizing: border-box;
-            background-color: var(--vscode-input-background);
-            color: var(--vscode-input-foreground);
+            background-color: var(--setting-searchbar-bg, var(--vscode-input-background));
+            color: var(--setting-searchbar-text, var(--vscode-input-foreground));
             border: 1px solid var(--vscode-input-border);
-            border-radius: 4px; /* Raggio ridotto per allinearla meglio */
+            border-radius: 8px; /* Arrotondamento aumentato per coerenza con il resto del design */
             outline: none;
             font-family: inherit;
             font-size: 11px; /* Grandezza del font uguale a quella dei titoli */
@@ -207,11 +206,11 @@
         }
         summary.category {
             font-family: var(--vscode-font-family) !important;
-            font-size: 11px !important;
+            font-size: var(--setting-title-font-size, 15px) !important;
             font-weight: bold !important;
             text-transform: uppercase;
             color: var(--vscode-sideBarSectionHeader-foreground);
-            background-color: transparent;
+            background-color: var(--setting-title-bg, transparent);
             padding: 4px 8px;
             border-radius: 4px;
             cursor: pointer;
@@ -245,6 +244,7 @@
 
         summary.category:hover {
             background-color: var(--vscode-list-hoverBackground);
+            color: var(--vscode-list-hoverForeground, inherit);
         }
         
         .category-group.pinned summary.category {
@@ -312,14 +312,14 @@
             border-bottom: 1px solid var(--vscode-tree-indentGuidesStroke);
         }
         body.use-zebra-stripes .shortcut-item:nth-child(even) {
-            background-color: var(--setting-alternate-row-color, rgba(130, 130, 130, 0.06));
+            background-color: var(--setting-alternate-row-color, rgba(130, 130, 130, 0.15));
         }
         .shortcut-item:last-child {
             border-bottom: none;
         }
         .shortcut-keys {
             font-family: var(--vscode-editor-font-family, 'Courier New', Courier, monospace) !important;
-            font-size: 11px !important;
+            font-size: var(--setting-keys-font-size, 11px) !important;
             color: var(--vscode-textPreformat-foreground);
             background-color: var(--setting-keys-bg, var(--vscode-textCodeBlock-background));
             padding: 2px 6px;
@@ -332,7 +332,7 @@
             border: 1px solid var(--vscode-widget-border);
         }
         .shortcut-command {
-            font-size: 1em;
+            font-size: var(--setting-font-size, 13px);
             font-weight: 500;
             margin-left: 16px;
             flex-grow: 1;

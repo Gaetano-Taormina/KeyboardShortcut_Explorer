@@ -1,21 +1,30 @@
-        // acquisiamo l'API di VS Code necessaria per comunicare tra HTML e backend
+        // acquire the VS Code API needed to communicate between HTML and backend
         const vscode = acquireVsCodeApi();
         
-        // Elementi dell'interfaccia HTML
+        // HTML interface elements
         const container = document.getElementById('shortcuts-container');
         const searchInput = document.getElementById('searchInput');
         const searchContainer = document.querySelector('.search-container');
         const noResults = document.getElementById('no-results');
+        const toggleSettingsBtn = document.getElementById('settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        const settingAppearanceMode = document.getElementById('setting-appearance-mode');
+        const settingColorProfile = document.getElementById('setting-color-profile');
+        const settingTextColor = document.getElementById('setting-text-color');
+        const settingTitleBgColor = document.getElementById('setting-title-bg-color');
+        const settingKeysBgColor = document.getElementById('setting-keys-bg-color');
+        const settingBubbleColor = document.getElementById('setting-bubble-color');
 
-        // Variabili per mantenere lo stato della nostra interfaccia
-        let shortcutsData = {}; // Qui salveremo tutti gli shortcut in arrivo dal backend
-        let reorderMode = false; // Indica se il bottone "Filtro/Riordina" è stato premuto
-        let pinMode = false;     // Indica se il bottone "Puntina" è stato premuto
+        // Variables to keep the state of our interface
+        let shortcutsData = {}; // Here we will save all shortcuts arriving from the backend
+        let reorderMode = false; // Indicates if the "Filter/Reorder" button was pressed
+        let pinMode = false;     // Indicates if the "Pin" button was pressed
         
-        // Riferimenti al Custom Menu
+        // References to the Custom Menu
         const customMenu = document.getElementById('custom-context-menu');
 
-        // Carichiamo le preferenze di ordinamento inviate dal backend
+        // Load ordering preferences sent by the backend
         let categoryOrder = [];
         if (typeof INJECTED_CATEGORY_ORDER !== 'undefined' && INJECTED_CATEGORY_ORDER) {
             categoryOrder = INJECTED_CATEGORY_ORDER;
@@ -26,17 +35,18 @@
             pinnedCategories = INJECTED_PINNED_CATEGORIES;
         }
         
-        // Liste estensioni ricevute dal backend
+        // Extension lists received from the backend
         let hiddenExtensions = [];
         let availableExtensions = [];
+        let builtInExtensions = [];
 
         /**
-         * Applica le impostazioni decise dall'utente (grandezza testo, colori, accessibilità)
+         * Applies the settings chosen by the user (text size, colors, accessibility)
          */
         function applySettings(settings) {
             if (!settings) return;
             
-            // Variabili CSS per le personalizzazioni utente
+            // CSS Variables for user customizations
             document.documentElement.style.setProperty('--setting-font-family', settings.fontFamily);
             document.documentElement.style.setProperty('--setting-font-size', settings.fontSize + 'px');
             document.documentElement.style.setProperty('--setting-keys-font-size', settings.keysFontSize + 'px');
@@ -44,64 +54,137 @@
             // Appearance Mode handling
             // We can add a class to body to enforce basic dark/light if the user wants an override
             // VS Code typically handles this, but if we need to force it, we could apply filters
+            // Appearance Mode: absolute override
+            // 1. BASE: Apply VS Code variables based on Appearance Mode
+            // (This sets the general background and fixes hover/focus contrasts)
             if (settings.appearanceMode === "Dark") {
-                document.body.style.colorScheme = "dark";
-                document.body.classList.add("force-dark");
-                document.body.classList.remove("force-light", "force-hc");
+                document.documentElement.style.setProperty('--vscode-sideBar-background', '#1e1e1e');
+                document.documentElement.style.setProperty('--vscode-sideBar-foreground', '#cccccc');
+                document.documentElement.style.setProperty('--vscode-sideBarSectionHeader-background', '#252526');
+                document.documentElement.style.setProperty('--vscode-sideBarSectionHeader-foreground', '#cccccc');
+                document.documentElement.style.setProperty('--vscode-foreground', '#cccccc');
+                document.documentElement.style.setProperty('--vscode-icon-foreground', '#cccccc'); // <-- FIX Symbols
+                document.documentElement.style.setProperty('--vscode-textPreformat-foreground', '#cccccc'); 
+                document.documentElement.style.setProperty('--vscode-input-background', '#3c3c3c');
+                document.documentElement.style.setProperty('--vscode-input-foreground', '#cccccc');
+                document.documentElement.style.setProperty('--vscode-input-border', '#3c3c3c');
+                document.documentElement.style.setProperty('--vscode-list-hoverBackground', '#2a2d2e');
+                document.documentElement.style.setProperty('--vscode-list-hoverForeground', '#cccccc');
+                
+                // Force extra variables useful for Alternative profiles
+                document.documentElement.style.setProperty('--vscode-button-background', '#0e639c');
+                document.documentElement.style.setProperty('--vscode-button-foreground', '#ffffff');
+                document.documentElement.style.setProperty('--vscode-editor-background', '#1e1e1e');
             } else if (settings.appearanceMode === "Light") {
-                document.body.style.colorScheme = "light";
-                document.body.classList.add("force-light");
-                document.body.classList.remove("force-dark", "force-hc");
+                document.documentElement.style.setProperty('--vscode-sideBar-background', '#f3f3f3');
+                document.documentElement.style.setProperty('--vscode-sideBar-foreground', '#333333');
+                document.documentElement.style.setProperty('--vscode-sideBarSectionHeader-background', '#e8e8e8');
+                document.documentElement.style.setProperty('--vscode-sideBarSectionHeader-foreground', '#333333');
+                document.documentElement.style.setProperty('--vscode-foreground', '#333333');
+                document.documentElement.style.setProperty('--vscode-icon-foreground', '#424242'); // <-- FIX Symbols
+                document.documentElement.style.setProperty('--vscode-textPreformat-foreground', '#333333'); 
+                document.documentElement.style.setProperty('--vscode-input-background', '#ffffff');
+                document.documentElement.style.setProperty('--vscode-input-foreground', '#333333');
+                document.documentElement.style.setProperty('--vscode-input-border', '#cecece');
+                document.documentElement.style.setProperty('--vscode-list-hoverBackground', '#e8e8e8');
+                document.documentElement.style.setProperty('--vscode-list-hoverForeground', '#333333');
+                
+                // Force extra variables useful for Alternative profiles
+                document.documentElement.style.setProperty('--vscode-button-background', '#007acc');
+                document.documentElement.style.setProperty('--vscode-button-foreground', '#ffffff');
+                document.documentElement.style.setProperty('--vscode-editor-background', '#ffffff');
             } else if (settings.appearanceMode === "High Contrast") {
-                document.body.classList.add("force-hc");
-                document.body.classList.remove("force-dark", "force-light");
-            } else {
-                document.body.style.colorScheme = "auto";
-                document.body.classList.remove("force-dark", "force-light", "force-hc");
+                document.documentElement.style.setProperty('--vscode-sideBar-background', '#000000');
+                document.documentElement.style.setProperty('--vscode-sideBar-foreground', '#ffffff');
+                document.documentElement.style.setProperty('--vscode-sideBarSectionHeader-background', '#000000');
+                document.documentElement.style.setProperty('--vscode-sideBarSectionHeader-foreground', '#ffffff');
+                document.documentElement.style.setProperty('--vscode-foreground', '#ffffff');
+                document.documentElement.style.setProperty('--vscode-icon-foreground', '#ffffff'); // <-- FIX Symbols
+                document.documentElement.style.setProperty('--vscode-textPreformat-foreground', '#ffffff'); 
+                document.documentElement.style.setProperty('--vscode-input-background', '#000000');
+                document.documentElement.style.setProperty('--vscode-input-foreground', '#ffffff');
+                document.documentElement.style.setProperty('--vscode-input-border', '#f38518');
+                document.documentElement.style.setProperty('--vscode-widget-border', '#f38518');
+                document.documentElement.style.setProperty('--vscode-list-hoverBackground', '#000000');
+                document.documentElement.style.setProperty('--vscode-list-hoverForeground', '#ffffff');
             }
 
-            // Color Profile handling
-            if (settings.colorProfile === "Alternative 1") {
-                // Esempio: Accents / Vibrant
-                document.documentElement.style.setProperty('--setting-text-color', 'var(--vscode-foreground)');
-                document.documentElement.style.setProperty('--setting-title-bg', 'var(--vscode-button-background)');
-                document.documentElement.style.setProperty('--setting-keys-bg', 'var(--vscode-textPreformat-foreground)');
-                document.documentElement.style.setProperty('--setting-bubble-color', 'var(--vscode-sideBar-background)');
-                document.documentElement.style.setProperty('--setting-scrollbar-color', 'var(--vscode-scrollbarSlider-background)');
-            } else if (settings.colorProfile === "Alternative 2") {
-                // Esempio: Minimal / Terminal
-                document.documentElement.style.setProperty('--setting-text-color', 'var(--vscode-terminal-foreground)');
-                document.documentElement.style.setProperty('--setting-title-bg', 'var(--vscode-terminal-background)');
-                document.documentElement.style.setProperty('--setting-keys-bg', 'var(--vscode-terminal-border)');
-                document.documentElement.style.setProperty('--setting-bubble-color', 'var(--vscode-terminal-background)');
-                document.documentElement.style.setProperty('--setting-scrollbar-color', 'var(--vscode-scrollbarSlider-background)');
-            } else if (settings.colorProfile === "Custom") {
-                document.documentElement.style.setProperty('--setting-text-color', settings.textColor);
-                document.documentElement.style.setProperty('--setting-title-bg', settings.titleBackgroundColor);
-                document.documentElement.style.setProperty('--setting-keys-bg', settings.keysBackgroundColor);
-                document.documentElement.style.setProperty('--setting-bubble-color', settings.bubbleColor);
-                document.documentElement.style.setProperty('--setting-scrollbar-color', settings.scrollbarColor);
-            } else { // "VS Code Native"
+            // 2. DEFAULT FALLBACK: Set hardcoded values for internal details if the user does not have an active profile.
+            if (settings.appearanceMode === "Light") {
+                document.documentElement.style.setProperty('--setting-bubble-color', '#ffffff');
+                document.documentElement.style.setProperty('--setting-keys-bg', '#e0e0e0');
+                document.documentElement.style.setProperty('--setting-title-bg', '#eaeaea');
+                document.documentElement.style.setProperty('--setting-text-color', '#333333');
+            } else if (settings.appearanceMode === "Dark") {
+                document.documentElement.style.setProperty('--setting-bubble-color', '#252526');
+                document.documentElement.style.setProperty('--setting-keys-bg', '#333333');
+                document.documentElement.style.setProperty('--setting-title-bg', '#2d2d2d');
+                document.documentElement.style.setProperty('--setting-text-color', '#cccccc');
+            } else if (settings.appearanceMode === "High Contrast") {
+                document.documentElement.style.setProperty('--setting-bubble-color', '#000000');
+                document.documentElement.style.setProperty('--setting-keys-bg', '#000000');
+                document.documentElement.style.setProperty('--setting-title-bg', '#000000');
+                document.documentElement.style.setProperty('--setting-text-color', '#ffffff');
+            } else {
+                // Native Appearance 
                 document.documentElement.style.setProperty('--setting-text-color', 'var(--vscode-foreground)');
                 document.documentElement.style.setProperty('--setting-title-bg', 'var(--vscode-editor-inactiveSelectionBackground)');
                 document.documentElement.style.setProperty('--setting-keys-bg', 'var(--vscode-textCodeBlock-background)');
                 document.documentElement.style.setProperty('--setting-bubble-color', 'var(--vscode-sideBar-background)');
-                document.documentElement.style.setProperty('--setting-scrollbar-color', 'var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4))');
+                document.documentElement.style.setProperty('--setting-bubble-color', 'var(--vscode-sideBar-background)');
+            }
+
+            // 3. COLOR PROFILE OVERRIDES: If using Custom or Alternative, these MUST override everything else!
+            if (settings.colorProfile === "Alternative 1") {
+                document.documentElement.style.setProperty('--setting-title-bg', 'var(--vscode-button-background)');
+                document.documentElement.style.setProperty('--setting-text-color', 'var(--vscode-foreground)');
+                document.documentElement.style.setProperty('--setting-keys-bg', 'var(--vscode-editor-background)');
+                document.documentElement.style.setProperty('--vscode-textPreformat-foreground', 'var(--vscode-editor-foreground)');
+                document.documentElement.style.setProperty('--setting-bubble-color', 'transparent'); // Blends with background
+            } else if (settings.colorProfile === "Alternative 2") {
+                document.documentElement.style.setProperty('--setting-title-bg', 'var(--vscode-terminal-background)');
+                document.documentElement.style.setProperty('--setting-text-color', 'var(--vscode-foreground)');
+                document.documentElement.style.setProperty('--setting-keys-bg', 'var(--vscode-button-secondaryBackground)');
+                document.documentElement.style.setProperty('--vscode-textPreformat-foreground', 'var(--vscode-button-secondaryForeground)');
+                document.documentElement.style.setProperty('--setting-bubble-color', 'transparent'); // Blends with background
+            } else if (settings.colorProfile === "Custom") {
+                document.documentElement.style.setProperty('--setting-text-color', settings.textColor);
+                document.documentElement.style.setProperty('--setting-title-bg', settings.titleBackgroundColor);
+                document.documentElement.style.setProperty('--setting-keys-bg', settings.keysBackgroundColor);
+                document.documentElement.style.setProperty('--vscode-textPreformat-foreground', settings.textColor); // Use Custom text color for keys!
+                document.documentElement.style.setProperty('--setting-bubble-color', settings.bubbleColor);
+                document.documentElement.style.setProperty('--setting-searchbar-bg', settings.searchbarBackgroundColor);
+                document.documentElement.style.setProperty('--setting-searchbar-text', settings.searchbarTextColor);
             }
 
             // Zebra striping handling
             if (settings.alternateRowColors) {
                 document.body.classList.add('use-zebra-stripes');
-                document.documentElement.style.setProperty('--setting-alternate-row-color', settings.alternateRowColor);
+                // Increased opacity/contrast logic applied via variable definition
+                let rowColor = '#82828233'; // Semi-transparent neutral color that adapts to light and dark backgrounds
+                if (settings.colorProfile === "Custom") {
+                    rowColor = settings.alternateRowColor;
+                }
+                document.documentElement.style.setProperty('--setting-alternate-row-color', rowColor);
             } else {
                 document.body.classList.remove('use-zebra-stripes');
             }
+
+            // Sync Webview Settings Panel (if exists)
+            if (settingAppearanceMode) settingAppearanceMode.value = settings.appearanceMode || "Auto";
+            if (settingColorProfile) settingColorProfile.value = settings.colorProfile || "VS Code Native";
+
+            const hexRegex = /^#[0-9A-Fa-f]{6}$/;
+            if (settings.textColor && hexRegex.test(settings.textColor) && settingTextColor) settingTextColor.value = settings.textColor;
+            if (settings.titleBackgroundColor && hexRegex.test(settings.titleBackgroundColor) && settingTitleBgColor) settingTitleBgColor.value = settings.titleBackgroundColor;
+            if (settings.keysBackgroundColor && hexRegex.test(settings.keysBackgroundColor) && settingKeysBgColor) settingKeysBgColor.value = settings.keysBackgroundColor;
+            if (settings.bubbleColor && hexRegex.test(settings.bubbleColor) && settingBubbleColor) settingBubbleColor.value = settings.bubbleColor;
             
-            // Impostazioni Dislessia
+            // Dyslexia Settings
             document.documentElement.style.setProperty('--setting-dyslexia-font', settings.dyslexiaFont);
             document.documentElement.style.setProperty('--setting-dyslexia-spacing', settings.dyslexiaLetterSpacing);
             
-            // Se l'utente ha attivato la modalità accessibilità, aggiungiamo una classe CSS speciale
+            // If the user has activated accessibility mode, add a special CSS class
             if (settings.accessibilityMode) {
                 document.body.classList.add('dyslexia-mode');
                 if (settings.dyslexiaBold) {
@@ -113,14 +196,19 @@
                 document.body.classList.remove('dyslexia-mode');
                 document.body.classList.remove('dyslexia-bold');
             }
+            
+            // Injection of CSS variables for font sizes
+            document.documentElement.style.setProperty('--setting-font-size', (settings.fontSize || 13) + 'px');
+            document.documentElement.style.setProperty('--setting-title-font-size', (settings.titleFontSize || 15) + 'px');
+            document.documentElement.style.setProperty('--setting-keys-font-size', (settings.keysFontSize || 11) + 'px');
         }
 
-        // Se il backend ci ha inviato le impostazioni, applichiamole subito
+        // If the backend sent us settings, apply them immediately
         if (typeof INJECTED_SETTINGS !== 'undefined' && INJECTED_SETTINGS) {
             applySettings(INJECTED_SETTINGS);
         }
 
-        // Se il backend ci ha inviato gli shortcut, salviamoli e disegnamoli
+        // If the backend sent us shortcuts, save them and draw them
         if (typeof INJECTED_DATA !== 'undefined' && INJECTED_DATA) {
             shortcutsData = INJECTED_DATA;
         }
@@ -137,7 +225,7 @@
             builtInExtensions = INJECTED_BUILTIN_EXTENSIONS;
         }
 
-        // Gestione disclaimer di aggiornamento
+        // Update disclaimer management
         if (typeof INJECTED_SHOW_DISCLAIMER !== 'undefined' && INJECTED_SHOW_DISCLAIMER) {
             const disclaimer = document.getElementById('restart-disclaimer');
             if (disclaimer) {
@@ -152,11 +240,11 @@
             }
         }
         
-        // Prima renderizzazione
+        // Initial render
         renderShortcuts();
 
         /**
-         * In ascolto dei comandi provenienti dal carosello (i bottoni nella barra in alto)
+         * Listening to commands from the carousel (buttons in the top bar)
          */
         window.addEventListener('message', event => {
             const message = event.data;
@@ -164,13 +252,12 @@
                 case 'toggleSearch':
                     searchContainer.classList.toggle('hidden');
                     break;
-                case 'toggleReorder':
-                    reorderMode = !reorderMode;
-                    renderShortcuts(); // Ridisegnamo per mostrare i controlli di riordino
+                case 'openSettings':
+                    if (settingsModal) settingsModal.classList.toggle('hidden');
                     break;
                 case 'togglePinMode':
                     pinMode = !pinMode;
-                    renderShortcuts(); // Ridisegnamo per mostrare i bottoni Pin
+                    renderShortcuts(); // Re-render to show Pin buttons
                     break;
                 case 'toggleCustomMenu':
                     toggleCustomMenuLogic();
@@ -179,30 +266,30 @@
         });
         
         /**
-         * Logica del Custom Context Menu (Filtro Estensioni)
+         * Custom Context Menu Logic (Extensions Filter)
          */
         function renderCustomMenu() {
-            // Costruiamo il menu dinamicamente
+            // Build the menu dynamically
             customMenu.innerHTML = '';
             
             if (availableExtensions.length === 0) {
                 const emptyItem = document.createElement('div');
                 emptyItem.className = 'context-menu-item';
-                emptyItem.textContent = 'Nessuna estensione rilevata';
+                emptyItem.textContent = 'No extension detected';
                 customMenu.appendChild(emptyItem);
             } else {
-                // Dividiamo le estensioni in Sistema e Utente
+                // Split extensions into System and User
                 const sysExts = availableExtensions.filter(e => builtInExtensions.includes(e));
                 const usrExts = availableExtensions.filter(e => !builtInExtensions.includes(e));
                 
-                // Funzione per creare l'header della categoria con Bulk Toggle
+                // Function to create category header with Bulk Toggle
                 function createCategoryHeader(labelStr, extensionsList, parentItem) {
                     const header = document.createElement('div');
                     header.className = 'context-menu-header';
                     
                     const checkmark = document.createElement('div');
                     checkmark.className = 'context-menu-check bulk-toggle';
-                    // Determiniamo se tutte le estensioni in questa lista sono visibili
+                    // Determine if all extensions in this list are visible
                     const allVisible = extensionsList.length > 0 && extensionsList.every(ext => !hiddenExtensions.includes(ext));
                     const someVisible = extensionsList.some(ext => !hiddenExtensions.includes(ext));
                     
@@ -217,30 +304,30 @@
                     const label = document.createElement('div');
                     label.className = 'context-menu-label';
                     label.textContent = labelStr;
-                    label.title = labelStr; // tooltip per testi lunghi
+                    label.title = labelStr; // tooltip for long texts
                     
                     const arrow = document.createElement('div');
                     arrow.className = 'submenu-arrow';
                     arrow.innerHTML = '▶';
                     
-                    // Cliccando sul checkmark o sul testo, selezioniamo/deselezioniamo tutte le estensioni
+                    // Clicking on the checkmark or text selects/deselects all extensions
                     function toggleBulk(ev) {
-                        ev.stopPropagation(); // Evitiamo di aprire/chiudere l'accordion
+                        ev.stopPropagation(); // Prevent opening/closing the accordion
                         if (allVisible) {
-                            // Nascondiamo tutte
+                            // Hide all
                             extensionsList.forEach(ext => {
                                 if (!hiddenExtensions.includes(ext)) hiddenExtensions.push(ext);
                             });
                         } else {
-                            // Mostriamo tutte (rimuoviamo da hiddenExtensions)
+                            // Show all (remove from hiddenExtensions)
                             hiddenExtensions = hiddenExtensions.filter(ext => !extensionsList.includes(ext));
                         }
                         vscode.postMessage({ command: 'updateHiddenExtensions', hiddenList: hiddenExtensions });
-                        // Lasciamo il menu com'era (aperto o chiuso)
+                        // Leave the menu as it was (open or closed)
                         const wasOpen = parentItem.classList.contains('open');
-                        renderCustomMenu(); // Solo ri-render, NON toggle (che lo chiuderebbe)
+                        renderCustomMenu(); // Only re-render, NOT toggle (which would close it)
                         renderShortcuts();
-                        // Ripristiniamo lo stato aperto/chiuso
+                        // Restore open/closed state
                         const newParent = Array.from(document.querySelectorAll('.context-menu-label')).find(l => l.textContent === labelStr)?.closest('.context-menu-item');
                         if (wasOpen && newParent) newParent.classList.add('open');
                     }
@@ -248,13 +335,13 @@
                     checkmark.addEventListener('click', toggleBulk);
                     label.addEventListener('click', toggleBulk);
                     
-                    // Cliccando la freccina si apre l'accordion
+                    // Clicking the arrow opens the accordion
                     arrow.addEventListener('click', (ev) => {
                         ev.stopPropagation();
                         parentItem.classList.toggle('open');
                     });
                     
-                    // Cliccando nell'area vuota della riga facciamo aprire
+                    // Clicking the empty area of the row opens it
                     header.addEventListener('click', (ev) => {
                         if (ev.target === header) {
                             ev.stopPropagation();
@@ -268,7 +355,7 @@
                     return header;
                 }
 
-                    // Funzione per creare gli elementi figli nel sottomenu
+                    // Function to create child items in the submenu
                     function createSubmenuItems(extensionsList, parentItem) {
                         const submenu = document.createElement('div');
                         submenu.className = 'context-menu-submenu';
@@ -291,7 +378,7 @@
                             const label = document.createElement('div');
                             label.className = 'context-menu-label';
                             label.textContent = ext;
-                            label.title = ext; // tooltip al passaggio del mouse
+                            label.title = ext; // tooltip on hover
                             
                             item.appendChild(checkmark);
                             item.appendChild(label);
@@ -332,7 +419,7 @@
                         return submenu;
                     }
 
-                    // --- Voce: System ---
+                    // --- Item: System ---
                     var systemItem = document.createElement('div');
                     systemItem.className = 'context-menu-item has-submenu';
                     const systemHeader = createCategoryHeader('System', sysExts, systemItem);
@@ -341,7 +428,7 @@
                     systemItem.appendChild(systemSubmenu);
                     customMenu.appendChild(systemItem);
                     
-                    // --- Voce: Extensions ---
+                    // --- Item: Extensions ---
                     var userItem = document.createElement('div');
                     userItem.className = 'context-menu-item has-submenu';
                     const userHeader = createCategoryHeader('Extensions', usrExts, userItem);
@@ -361,7 +448,7 @@
             }
         }
 
-        // Chiudi il menu se l'utente clicca fuori
+        // Close the menu if the user clicks outside
         document.addEventListener('click', () => {
             if (!customMenu.classList.contains('hidden')) {
                 customMenu.classList.add('hidden');
@@ -369,28 +456,18 @@
         });
         
         /**
-         * Logica Espandi/Comprimi Tutte le Categorie
+         * Expand/Collapse All Categories Logic
          */
         const toggleAllBtn = document.getElementById('toggle-all-btn');
-        let allFoldersOpen = true; // Di default le tendine sono aperte
         
         toggleAllBtn.addEventListener('click', () => {
-            allFoldersOpen = !allFoldersOpen;
-            const tuttiIGruppi = document.querySelectorAll('details.category-group');
-            tuttiIGruppi.forEach(gruppo => {
-                gruppo.open = allFoldersOpen;
-            });
-            
-            // Cambiamo leggermente l'opacità per dare feedback visivo
-            if (allFoldersOpen) {
-                toggleAllBtn.style.opacity = '1';
-            } else {
-                toggleAllBtn.style.opacity = '0.5';
-            }
+            const allDetails = document.querySelectorAll('.category-group:not(.hidden)');
+            const anyClosed = Array.from(allDetails).some(d => !d.open);
+            allDetails.forEach(d => d.open = anyClosed);
         });
 
         /**
-         * Funzioni di supporto per la Ricerca Avanzata
+         * Support functions for Advanced Search
          */
         function normalizeText(text) {
             return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -456,13 +533,13 @@
         }
 
         /**
-         * Logica della Barra di Ricerca Avanzata
+         * Advanced Search Bar Logic
          */
         searchInput.addEventListener('input', (event) => {
             let rawTesto = event.target.value;
             let testoPulito = normalizeText(rawTesto);
             
-            // Otteniamo il testo originale + eventuali traduzioni
+            // Get the original text + possible translations
             const terminiDaCercare = getSynonyms(testoPulito);
 
             const tuttiGliElementi = document.querySelectorAll('.shortcut-item');
@@ -470,7 +547,7 @@
             
             let elementiVisibiliTotali = 0;
 
-            // Filtriamo le singole righe (shortcut)
+            // Filter single rows (shortcuts)
             tuttiGliElementi.forEach(elemento => {
                 const comando = elemento.getAttribute('data-command').toLowerCase();
                 const tasti = elemento.getAttribute('data-keys').toLowerCase();
@@ -478,13 +555,13 @@
                 let isMatch = false;
                 
                 for (const term of terminiDaCercare) {
-                    // Cerca per keys
+                    // Search by keys
                     if (tasti.includes(term)) {
                         isMatch = true;
                         break;
                     }
                     
-                    // Cerca per comando con Fuzzy Logic
+                    // Search by command with Fuzzy Logic
                     if (fuzzyMatch(term, comando)) {
                         isMatch = true;
                         break;
@@ -492,13 +569,13 @@
                 }
                 
                 if (isMatch) {
-                    elemento.classList.remove('hidden'); // Mostralo
+                    elemento.classList.remove('hidden'); // Show it
                 } else {
-                    elemento.classList.add('hidden'); // Nascondilo
+                    elemento.classList.add('hidden'); // Hide it
                 }
             });
 
-            // Filtriamo i gruppi
+            // Filter groups
             tuttiIGruppi.forEach(gruppo => {
                 const elementiAncoraVisibili = gruppo.querySelectorAll('.shortcut-item:not(.hidden)');
                 if (elementiAncoraVisibili.length === 0) {
@@ -512,12 +589,12 @@
                 }
             });
 
-            // Mostriamo la scritta "Nessun risultato"
+            // Show "No results" message
             noResults.style.display = elementiVisibiliTotali === 0 && rawTesto.length > 0 ? 'block' : 'none';
         });
 
         /**
-         * Ordina le categorie seguendo prima quelle pinnate (fissate) e poi l'ordine personalizzato
+         * Orders categories, putting pinned ones first, then custom order
          */
         function getOrderedCategories() {
             const tutteLeCategorie = Object.keys(shortcutsData);
@@ -526,15 +603,15 @@
                 const aE_Fissata = pinnedCategories.includes(categoriaA);
                 const bE_Fissata = pinnedCategories.includes(categoriaB);
                 
-                // Le categorie fissate (Pinnate) vincono sempre e vanno in alto
+                // Pinned categories always win and go to the top
                 if (aE_Fissata && !bE_Fissata) return -1;
                 if (!aE_Fissata && bE_Fissata) return 1;
 
-                // Altrimenti, ordiniamo in base all'ordine salvato dal drag and drop
+                // Otherwise, sort based on the saved drag and drop order
                 let posizioneA = categoryOrder.indexOf(categoriaA);
                 let posizioneB = categoryOrder.indexOf(categoriaB);
                 
-                // Se non hanno mai avuto un ordine, mettiamole in fondo (999)
+                // If they never had an order, put them at the bottom (999)
                 if (posizioneA === -1) posizioneA = 999;
                 if (posizioneB === -1) posizioneB = 999;
                 
@@ -543,7 +620,7 @@
         }
 
         /**
-         * Salvataggio persistente inviando i dati al backend di VS Code (globalState)
+         * Persistent save by sending data to VS Code backend (globalState)
          */
         function saveOrder() {
             const gruppi = Array.from(document.querySelectorAll('.category-group'));
@@ -556,58 +633,57 @@
         }
 
         /**
-         * renderShortcuts: Ricrea tutto l'HTML dinamico ogni volta che serve.
+         * renderShortcuts: Recreates all dynamic HTML whenever needed.
          */
         function renderShortcuts() {
-            // Svuotiamo il contenitore principale
+            // Empty the main container
             container.innerHTML = '';
             
-            // Prendiamo le categorie nell'ordine corretto
+            // Get categories in the correct order
             const categorieOrdinate = getOrderedCategories();
             
             categorieOrdinate.forEach(nomeCategoria => {
-                // Filtro locale: se è un'estensione ed è nascosta, la saltiamo
+                // Local filter: if it's an extension and it's hidden, skip it
                 if (hiddenExtensions.includes(nomeCategoria)) {
                     return;
                 }
                 
-                // Creiamo il contenitore del gruppo (il tag HTML <details> crea una tendina apribile)
+                // Create group container (HTML <details> tag creates an expandable accordion)
                 const divGruppo = document.createElement('details');
                 divGruppo.className = 'category-group';
                 divGruppo.setAttribute('data-category', nomeCategoria);
-                divGruppo.open = true; // Di default la tendina è aperta
+                divGruppo.open = true; // Accordion is open by default
                 
-                // Controlliamo se questa categoria è Fissata (Pinned)
+                // Check if this category is Pinned
                 const isFissata = pinnedCategories.includes(nomeCategoria);
                 if (isFissata) {
                     divGruppo.classList.add('pinned');
                 }
                 
-                // Se abbiamo premuto il bottone Filtro, rendiamo tutto trascinabile
-                if (reorderMode) {
-                    divGruppo.draggable = true;
-                    divGruppo.classList.add('draggable');
-                    setupDragAndDrop(divGruppo);
-                }
+                // The accordion divGruppo acts as a drop zone, but is not entirely draggable (to avoid giant block effect)
+                divGruppo.classList.add('droppable-area');
                 
-                // --- Creazione dell'intestazione (Il Titolo della Categoria) ---
+                // --- Header Creation (Category Title) ---
                 const titoloGruppo = document.createElement('summary');
                 titoloGruppo.className = 'category';
+                titoloGruppo.draggable = true; // Only the title is draggable! Does not create giant ghosts
+                titoloGruppo.classList.add('draggable');
+                setupDragAndDrop(titoloGruppo, divGruppo);
                 
                 const testoDelTitolo = document.createElement('span');
                 testoDelTitolo.className = 'category-title-text';
                 testoDelTitolo.textContent = nomeCategoria;
                 
-                // --- Creazione dei controlli (Frecce su/giù e Bottone Pin) ---
+                // --- Controls Creation (Up/Down Arrows and Pin Button) ---
                 const divControlli = document.createElement('div');
                 divControlli.className = 'reorder-controls';
                 
-                // Se siamo in modalità Riordina o se la categoria è Fissata, mostriamo sempre i controlli
-                if (reorderMode || isFissata) {
+                // Controls always visible on hover or if pinned
+                if (isFissata) {
                     divControlli.classList.add('always-visible');
                 }
                 
-                // Creazione Bottone Pin 📌 (Ora usando SVG eleganti al posto degli sticker)
+                // Pin Button Creation 📌 (Now using elegant SVGs instead of emojis)
                 const bottonePin = document.createElement('button');
                 bottonePin.className = 'reorder-btn';
                 
@@ -621,10 +697,10 @@
                     bottonePin.innerHTML = svgPinVuoto;
                 }
                 
-                bottonePin.title = "Fissa in cima";
+                bottonePin.title = "Pin to top";
                 bottonePin.onclick = (e) => {
-                    e.preventDefault(); // Impedisce di chiudere la tendina
-                    e.stopPropagation(); // Evita conflitti
+                    e.preventDefault(); // Prevents closing the accordion
+                    e.stopPropagation(); // Prevents conflicts
                     if (isFissata) {
                         pinnedCategories = pinnedCategories.filter(c => c !== nomeCategoria);
                     } else {
@@ -635,7 +711,7 @@
                 };
                 divControlli.appendChild(bottonePin);
                 
-                // Creazione Frecce Su/Giù (Solo se non è fissata e siamo in reorderMode, così è più pulito)
+                // Up/Down Arrows Creation (Only if not pinned and we are in reorderMode, keeps it clean)
                 if (!isFissata && reorderMode) {
                     const bottoneSu = document.createElement('button');
                     bottoneSu.className = 'reorder-btn';
@@ -670,7 +746,7 @@
                 titoloGruppo.appendChild(testoDelTitolo);
                 titoloGruppo.appendChild(divControlli);
                 
-                // Blocca il toggle del details se abbiamo appena trascinato
+                // Block details toggle if we just dragged
                 titoloGruppo.addEventListener('click', (e) => {
                     if (justDragged) {
                         e.preventDefault();
@@ -679,13 +755,13 @@
                 
                 divGruppo.appendChild(titoloGruppo);
                 
-                // --- Creazione delle singole righe degli Shortcut ---
+                // --- Creation of single Shortcut rows ---
                 const listaScorciatoie = shortcutsData[nomeCategoria];
                 listaScorciatoie.forEach(shortcut => {
                     const rigaShortcut = document.createElement('div');
                     rigaShortcut.className = 'shortcut-item';
                     
-                    // Salviamo i dati reali come attributi per agevolare la Ricerca
+                    // Save real data as attributes to facilitate Search
                     rigaShortcut.setAttribute('data-command', shortcut.command);
                     rigaShortcut.setAttribute('data-keys', shortcut.keys);
                     
@@ -696,11 +772,11 @@
                     const boxTesto = document.createElement('div');
                     boxTesto.className = 'shortcut-command';
                     
-                    // Taglia i punti e prende solo la parola finale della funzione
+                    // Cuts dots and takes only the final word of the function
                     const commandParts = shortcut.command.split('.');
                     boxTesto.textContent = commandParts[commandParts.length - 1];
                     
-                    // Aggiunge la versione completa come tooltip (titolo) al passaggio del mouse
+                    // Adds the full version as tooltip on hover
                     boxTesto.title = shortcut.command;
                     
                     rigaShortcut.appendChild(boxTasti);
@@ -708,85 +784,107 @@
                     divGruppo.appendChild(rigaShortcut);
                 });
                 
-                // Infine, aggiungiamo l'intero gruppo alla schermata
+                // Finally, we add the entire group to the screen
                 container.appendChild(divGruppo);
             });
             
-            // Riapplichiamo la ricerca nel caso ce ne fosse una attiva
+            // Re-apply search in case one was active
             searchInput.dispatchEvent(new Event('input'));
         }
 
         /**
-         * Logica del Drag and Drop (Trascinamento)
-         * Gestisce la magia di spostare gli elementi con il mouse
+         * Drag and Drop Logic
+         * Handles the magic of moving elements with the mouse
          */
         let elementoTrascinato = null;
         let justDragged = false;
 
-        function setupDragAndDrop(elementoHTML) {
-            elementoHTML.addEventListener('dragstart', function(e) {
-                if (this.classList.contains('pinned')) {
-                    e.preventDefault(); // Le categorie Pinned non si toccano!
+        function setupDragAndDrop(titoloGruppo, divGruppo) {
+            // Events for the element being DRAGGED (The title)
+            titoloGruppo.addEventListener('dragstart', function(e) {
+                if (divGruppo.classList.contains('pinned')) {
+                    e.preventDefault(); // Pinned categories cannot be moved!
                     return;
                 }
                 
-                // Salviamo lo stato e chiudiamo la tendina per rendere il blocco "leggero" e facile da trascinare
-                this.dataset.wasOpen = this.open;
-                this.open = false;
-                
-                elementoTrascinato = this;
-                setTimeout(() => this.classList.add('dragging'), 0);
+                elementoTrascinato = divGruppo;
+                // Do not close the accordion: the browser will automatically clone only the <summary> (titoloGruppo)
+                // This solves the giant shadow problem!
+                setTimeout(() => divGruppo.classList.add('dragging'), 0);
             });
 
-            // Quando rilasciamo
-            elementoHTML.addEventListener('dragend', function() {
-                this.classList.remove('dragging');
-                
-                // Ripristiniamo la tendina se era aperta
-                if (this.dataset.wasOpen === 'true') {
-                    this.open = true;
-                }
-                
+            titoloGruppo.addEventListener('dragend', function() {
                 if (elementoTrascinato) {
+                    elementoTrascinato.classList.remove('dragging');
                     justDragged = true;
                     setTimeout(() => justDragged = false, 100);
                 }
                 elementoTrascinato = null;
-                saveOrder(); // Salviamo il nuovo ordine
+                saveOrder(); // Save the new order
             });
 
-            // Quando ci passiamo sopra trascinando
-            elementoHTML.addEventListener('dragover', function(e) {
+            // Events for the DROP area (The entire group)
+            divGruppo.addEventListener('dragover', function(e) {
                 e.preventDefault();
                 if (this.classList.contains('pinned')) return;
-                this.classList.add('drag-over'); // Mostriamo la linea blu di dove stiamo per droppare
+                this.classList.add('drag-over'); // Show the blue line where we are about to drop
             });
 
-            // Quando usciamo dall'elemento
-            elementoHTML.addEventListener('dragleave', function() {
+            divGruppo.addEventListener('dragleave', function() {
                 this.classList.remove('drag-over');
             });
 
-            // L'atto finale del Rilascio (Drop)
-            elementoHTML.addEventListener('drop', function(e) {
+            divGruppo.addEventListener('drop', function(e) {
                 e.preventDefault();
                 this.classList.remove('drag-over');
                 
                 if (this.classList.contains('pinned')) return;
                 
-                // Se stiamo droppando su un elemento diverso da quello che stiamo trascinando
+                // If we are dropping on a different element than the one we are dragging
                 if (this !== elementoTrascinato && elementoTrascinato) {
-                    // Troviamo tutti i gruppi non pinnati
+                    // Find all non-pinned groups
                     const tuttiIGruppiLiberi = Array.from(container.querySelectorAll('.category-group:not(.pinned)'));
                     const posizioneIniziale = tuttiIGruppiLiberi.indexOf(elementoTrascinato);
                     const posizioneTarget = tuttiIGruppiLiberi.indexOf(this);
                     
-                    // Capiamo se stiamo scendendo o salendo per scambiarli correttamente
+                    // Figure out if we are moving up or down to swap them correctly
                     if (posizioneIniziale < posizioneTarget) {
                         this.after(elementoTrascinato);
                     } else {
                         this.before(elementoTrascinato);
                     }
+                    
+                    // Update the order in the backend immediately
+                    saveOrder();
                 }
             });
         }
+
+        // Settings Modal Toggle
+        if (toggleSettingsBtn) {
+            toggleSettingsBtn.addEventListener('click', () => {
+                if (settingsModal) settingsModal.classList.toggle('hidden');
+            });
+        }
+        
+        if (closeSettingsBtn) {
+            closeSettingsBtn.addEventListener('click', () => {
+                if (settingsModal) settingsModal.classList.add('hidden');
+            });
+        }
+
+        // Event Listeners for Settings changes
+        function updateSetting(key, value) {
+            vscode.postMessage({
+                command: 'updateSetting',
+                key: key,
+                value: value
+            });
+        }
+
+        if (settingAppearanceMode) settingAppearanceMode.addEventListener('change', (e) => updateSetting('appearanceMode', e.target.value));
+        if (settingColorProfile) settingColorProfile.addEventListener('change', (e) => updateSetting('colorProfile', e.target.value));
+        if (settingTextColor) settingTextColor.addEventListener('input', (e) => updateSetting('textColor', e.target.value));
+        if (settingTitleBgColor) settingTitleBgColor.addEventListener('input', (e) => updateSetting('titleBackgroundColor', e.target.value));
+        if (settingKeysBgColor) settingKeysBgColor.addEventListener('input', (e) => updateSetting('keysBackgroundColor', e.target.value));
+        if (settingBubbleColor) settingBubbleColor.addEventListener('input', (e) => updateSetting('bubbleColor', e.target.value));
