@@ -1,5 +1,12 @@
 # KeyboardShortcut Explorer
 
+[![Install on VS Code](https://img.shields.io/badge/Install%20on-VS%20Code-007ACC.png?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=GaetanoTaormina.keyboardshortcut-explorer)
+[![VS Marketplace Version](https://vsmarketplacebadges.dev/version/GaetanoTaormina.keyboardshortcut-explorer.png)](https://marketplace.visualstudio.com/items?itemName=GaetanoTaormina.keyboardshortcut-explorer)
+[![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs/GaetanoTaormina.keyboardshortcut-explorer.png)](https://marketplace.visualstudio.com/items?itemName=GaetanoTaormina.keyboardshortcut-explorer)
+[![VS Marketplace Downloads](https://vsmarketplacebadges.dev/downloads/GaetanoTaormina.keyboardshortcut-explorer.png)](https://marketplace.visualstudio.com/items?itemName=GaetanoTaormina.keyboardshortcut-explorer)
+[![VS Marketplace Rating Stars](https://vsmarketplacebadges.dev/rating-star/GaetanoTaormina.keyboardshortcut-explorer.png)](https://marketplace.visualstudio.com/items?itemName=GaetanoTaormina.keyboardshortcut-explorer)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.png)](https://github.com/Gaetano-Taormina/KeyboardShortcut_Explorer/blob/main/LICENSE)
+
 A sleek, professional, and highly customizable VS Code extension to view, search, and manage all your keyboard shortcuts directly from the sidebar.
 
 ## Features
@@ -52,6 +59,11 @@ This extension contributes the following settings grouped by category:
 - `keyboardshortcut-explorer.accessibility.dyslexiaLetterSpacing`: Adjust letter spacing during Dyslexia Mode.
 
 ## Release Notes
+
+### 1.0.7
+
+- **Live Marketplace Badges & Review Stars**: Added dynamic, real-time PNG badges to the top of the README featuring current Marketplace version, install counts, average rating scores, and visual rating stars (`★★★★★`) via `vsmarketplacebadges.dev`.
+- **Security & Packaging Hardening**: Updated all badge links from restricted SVG format to high-compatibility PNG images, ensuring 100% compliance with `vsce` Marketplace security policies.
 
 ### 1.0.6
 

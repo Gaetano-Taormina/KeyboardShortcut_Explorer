@@ -2,7 +2,7 @@
   "name": "keyboardshortcut-explorer",
   "displayName": "Keyboard Shortcuts",
   "description": "A fantastic extension to explore your keyboard shortcuts",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "publisher": "GaetanoTaormina",
   "icon": "media/icon.png",
   "repository": {

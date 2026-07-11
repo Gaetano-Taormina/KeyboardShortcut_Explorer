@@ -164,7 +164,7 @@ class ShortcutsWebviewProvider {
         const availableExtensions = this._availableExtensions;
 
         // Update Disclaimer management
-        let currentVersion = "1.0.6";
+        let currentVersion = "1.0.7";
         try {
             const packageJsonPath = path.join(this._extensionUri.fsPath, 'package.json');
             const packageJsonData = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
@@ -196,7 +196,7 @@ class ShortcutsWebviewProvider {
         htmlContent = htmlContent.replace('const INJECTED_PINNED_CATEGORIES = null;', `const INJECTED_PINNED_CATEGORIES = ${JSON.stringify(pinnedCategories)};`);
         htmlContent = htmlContent.replace('const INJECTED_CATEGORY_ORDER = null;', `const INJECTED_CATEGORY_ORDER = ${JSON.stringify(categoryOrder)};`);
         htmlContent = htmlContent.replace('const INJECTED_SHOW_DISCLAIMER = false;', `const INJECTED_SHOW_DISCLAIMER = ${showDisclaimer};`);
-        htmlContent = htmlContent.replace('const INJECTED_VERSION = "1.0.6";', `const INJECTED_VERSION = "${currentVersion}";`);
+        htmlContent = htmlContent.replace('const INJECTED_VERSION = "1.0.7";', `const INJECTED_VERSION = "${currentVersion}";`);
         htmlContent = htmlContent.replace('{{styleUri}}', styleUri.toString());
         htmlContent = htmlContent.replace('{{scriptUri}}', scriptUri.toString());
         htmlContent = htmlContent.replace('{{searchBarUri}}', searchBarUri.toString());
