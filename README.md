@@ -18,26 +18,46 @@ No special requirements. Works out-of-the-box with any VS Code setup.
 
 ## Extension Settings
 
-This extension contributes the following settings:
+This extension contributes the following settings grouped by category:
 
-- `keyboardshortcut-explorer.fontFamily`: Change the general font family.
-- `keyboardshortcut-explorer.fontSize`: Adjust the base font size of the list.
-- `keyboardshortcut-explorer.keysFontSize`: Adjust the font size of the shortcut keys.
-- `keyboardshortcut-explorer.titleFontSize`: Adjust the font size of the category titles.
-- `keyboardshortcut-explorer.colorProfile`: Choose from different color combinations (VS Code Native, Alternative 1, Alternative 2, Custom) to remix how UI elements pull colors from your theme.
-- `keyboardshortcut-explorer.appearanceMode`: Force the overall look to Auto, Dark, Light, or High Contrast.
-- `keyboardshortcut-explorer.alternateRowColors`: Enable alternating row colors (zebra striping) for better readability.
-- `keyboardshortcut-explorer.alternateRowColor`: Custom color for the alternating rows.
-- `keyboardshortcut-explorer.textColor`: Custom RGB/Hex color for text (or inherit from theme).
-- `keyboardshortcut-explorer.titleBackgroundColor`: Custom RGB/Hex background color for the category titles.
-- `keyboardshortcut-explorer.keysBackgroundColor`: Custom RGB/Hex background color for the keys.
-- `keyboardshortcut-explorer.bubbleColor`: Change the background color of the main shortcut container.
-- `keyboardshortcut-explorer.accessibilityMode`: Enable Dyslexia-friendly mode.
-- `keyboardshortcut-explorer.dyslexiaFont`: Specify the font used when Dyslexia Mode is enabled.
-- `keyboardshortcut-explorer.dyslexiaBold`: Force bold text during Dyslexia Mode.
-- `keyboardshortcut-explorer.dyslexiaLetterSpacing`: Adjust letter spacing during Dyslexia Mode.
+### Colors & Theme (`keyboardshortcut-explorer.colors.*`)
+
+- `keyboardshortcut-explorer.colors.appearanceMode`: Force the overall appearance mode (Native, Dark, Light, or High Contrast).
+- `keyboardshortcut-explorer.colors.colorProfile`: Choose from different color combinations (VS Code Native, Alternative 1, Alternative 2, Custom) to remix how UI elements pull colors from your theme.
+- `keyboardshortcut-explorer.colors.textColor`: Custom RGB/Hex color for text (or inherit from theme).
+- `keyboardshortcut-explorer.colors.titleBackgroundColor`: Custom RGB/Hex background color for the category titles.
+- `keyboardshortcut-explorer.colors.keysBackgroundColor`: Custom RGB/Hex background color for the keys.
+- `keyboardshortcut-explorer.colors.bubbleColor`: Change the background color of the main shortcut container.
+- `keyboardshortcut-explorer.colors.searchbarBackgroundColor`: Custom RGB/Hex background color for the search input bar.
+- `keyboardshortcut-explorer.colors.searchbarTextColor`: Custom RGB/Hex text color for the search input bar.
+- `keyboardshortcut-explorer.colors.alternateRowColor`: Custom RGB/Hex color for the alternating rows when zebra striping is active.
+- `keyboardshortcut-explorer.colors.scrollbarColor`: Custom RGB/Hex color for the Webview scrollbar thumb.
+
+### Typography (`keyboardshortcut-explorer.typography.*`)
+
+- `keyboardshortcut-explorer.typography.fontFamily`: Change the general font family.
+- `keyboardshortcut-explorer.typography.fontSize`: Adjust the base font size of the list.
+- `keyboardshortcut-explorer.typography.titleFontSize`: Adjust the font size of the category titles.
+- `keyboardshortcut-explorer.typography.keysFontSize`: Adjust the font size of the shortcut keys.
+
+### Appearance (`keyboardshortcut-explorer.appearance.*`)
+
+- `keyboardshortcut-explorer.appearance.alternateRowColors`: Enable alternating row colors (zebra striping) for better list readability.
+
+### Accessibility (`keyboardshortcut-explorer.accessibility.*`)
+
+- `keyboardshortcut-explorer.accessibility.accessibilityMode`: Enable Dyslexia-friendly mode.
+- `keyboardshortcut-explorer.accessibility.dyslexiaFont`: Specify the font used when Dyslexia Mode is enabled.
+- `keyboardshortcut-explorer.accessibility.dyslexiaBold`: Force bold text during Dyslexia Mode.
+- `keyboardshortcut-explorer.accessibility.dyslexiaLetterSpacing`: Adjust letter spacing during Dyslexia Mode.
 
 ## Release Notes
+
+### 1.0.6
+
+- **Modular Search Bar & Keystroke Detection**: Refactored search and keystroke capture logic into a standalone, modular webview component (`searchBar.js`) for cleaner architecture and improved maintainability.
+- **Unified Color Settings & Auto-Cleanup**: Reorganized `appearanceMode` cleanly under the `.colors.` configuration hierarchy (`keyboardshortcut-explorer.colors.appearanceMode`). Added automatic cleanup of custom `settings.json` lines when restoring default ("Native") or "VS Code Native" themes, alongside seamless migration and recovery of legacy setting keys without data loss.
+- **Enhanced Security Hardening**: Restricted Webview `localResourceRoots` specifically to the `webview/` and `media/` directories and injected strict Content Security Policy (CSP) headers into the Webview DOM.
 
 ### 1.0.5
 

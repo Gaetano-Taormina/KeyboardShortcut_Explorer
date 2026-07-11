@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline'; font-src {{cspSource}};">
     <title>Keyboard Shortcut Explorer</title>
     <link rel="stylesheet" href="{{styleUri}}">
 </head>
@@ -39,8 +40,9 @@
         const INJECTED_PINNED_CATEGORIES = null;
         const INJECTED_CATEGORY_ORDER = null;
         const INJECTED_SHOW_DISCLAIMER = false;
-        const INJECTED_VERSION = "1.0.5";
+        const INJECTED_VERSION = "1.0.6";
     </script>
+    <script src="{{searchBarUri}}"></script>
     <script src="{{scriptUri}}"></script>
 </body>
 </html>

@@ -26,10 +26,13 @@ class ShortcutsWebviewProvider {
     resolveWebviewView(webviewView) {
         this._view = webviewView;
         
-        // Tell VS Code we want to use JavaScript in our interface
+        // Tell VS Code we want to use JavaScript in our interface (restricted to webview/ and media/)
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [this._extensionUri]
+            localResourceRoots: [
+                vscode.Uri.joinPath(this._extensionUri, 'webview'),
+                vscode.Uri.joinPath(this._extensionUri, 'media')
+            ]
         };
 
         // Listen for configuration changes in real time
@@ -74,8 +77,27 @@ class ShortcutsWebviewProvider {
                         await this._globalState.update('categoryOrder', message.orderList);
                         break;
                     case 'updateSetting':
-                        const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer');
-                        await config.update(message.key, message.value, vscode.ConfigurationTarget.Global);
+                        const configColors = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
+                        if (message.key === 'appearanceMode' && message.value === 'Native') {
+                            await configColors.update(message.key, undefined, vscode.ConfigurationTarget.Global);
+                        } else if (message.key === 'colorProfile' && message.value === 'VS Code Native') {
+                            await configColors.update(message.key, undefined, vscode.ConfigurationTarget.Global);
+                            const keysToClean = [
+                                'textColor', 'titleBackgroundColor', 'keysBackgroundColor', 
+                                'bubbleColor', 'searchbarBackgroundColor', 'searchbarTextColor', 
+                                'alternateRowColor', 'scrollbarColor'
+                            ];
+                            for (const k of keysToClean) {
+                                await configColors.update(k, undefined, vscode.ConfigurationTarget.Global);
+                            }
+                        } else {
+                            await configColors.update(message.key, message.value, vscode.ConfigurationTarget.Global);
+                            if (message.key !== 'colorProfile' && message.key !== 'appearanceMode') {
+                                if (configColors.get('colorProfile') !== 'Custom') {
+                                    await configColors.update('colorProfile', 'Custom', vscode.ConfigurationTarget.Global);
+                                }
+                            }
+                        }
                         break;
                 }
             }
@@ -95,7 +117,7 @@ class ShortcutsWebviewProvider {
         const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer');
         const settings = {
             colorProfile: config.get('colors.colorProfile'),
-            appearanceMode: config.get('appearance.appearanceMode'),
+            appearanceMode: config.get('colors.appearanceMode'),
             alternateRowColors: config.get('appearance.alternateRowColors'),
             alternateRowColor: config.get('colors.alternateRowColor'),
             fontFamily: config.get('typography.fontFamily'),
@@ -142,7 +164,7 @@ class ShortcutsWebviewProvider {
         const availableExtensions = this._availableExtensions;
 
         // Update Disclaimer management
-        let currentVersion = "1.0.5";
+        let currentVersion = "1.0.6";
         try {
             const packageJsonPath = path.join(this._extensionUri.fsPath, 'package.json');
             const packageJsonData = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
@@ -156,8 +178,10 @@ class ShortcutsWebviewProvider {
         // 4. Prepare safe links (URI) for our CSS and JS files
         const stylePath = vscode.Uri.joinPath(this._extensionUri, 'webview', 'style.css');
         const scriptPath = vscode.Uri.joinPath(this._extensionUri, 'webview', 'script.js');
+        const searchBarPath = vscode.Uri.joinPath(this._extensionUri, 'webview', 'components', 'searchBar.js');
         const styleUri = this._view.webview.asWebviewUri(stylePath);
         const scriptUri = this._view.webview.asWebviewUri(scriptPath);
+        const searchBarUri = this._view.webview.asWebviewUri(searchBarPath);
 
         // 5. Read the index.html file which contains the "skeleton" of the interface
         const htmlPath = vscode.Uri.joinPath(this._extensionUri, 'webview', 'index.html');
@@ -172,9 +196,11 @@ class ShortcutsWebviewProvider {
         htmlContent = htmlContent.replace('const INJECTED_PINNED_CATEGORIES = null;', `const INJECTED_PINNED_CATEGORIES = ${JSON.stringify(pinnedCategories)};`);
         htmlContent = htmlContent.replace('const INJECTED_CATEGORY_ORDER = null;', `const INJECTED_CATEGORY_ORDER = ${JSON.stringify(categoryOrder)};`);
         htmlContent = htmlContent.replace('const INJECTED_SHOW_DISCLAIMER = false;', `const INJECTED_SHOW_DISCLAIMER = ${showDisclaimer};`);
-        htmlContent = htmlContent.replace('const INJECTED_VERSION = "1.0.5";', `const INJECTED_VERSION = "${currentVersion}";`);
+        htmlContent = htmlContent.replace('const INJECTED_VERSION = "1.0.6";', `const INJECTED_VERSION = "${currentVersion}";`);
         htmlContent = htmlContent.replace('{{styleUri}}', styleUri.toString());
         htmlContent = htmlContent.replace('{{scriptUri}}', scriptUri.toString());
+        htmlContent = htmlContent.replace('{{searchBarUri}}', searchBarUri.toString());
+        htmlContent = htmlContent.replace(/{{cspSource}}/g, this._view.webview.cspSource);
         
         // Tell VS Code to display our modified HTML
         this._view.webview.html = htmlContent;
@@ -449,6 +475,17 @@ let providerInstance = null;
  * This is the main function that VS Code calls to "turn on" our extension.
  */
 function activate(context) {
+    // Migrate & recover old setting appearance.appearanceMode to colors.appearanceMode without data loss
+    const oldAppearanceConfig = vscode.workspace.getConfiguration('keyboardshortcut-explorer.appearance');
+    const newColorsConfig = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
+    const oldVal = oldAppearanceConfig.inspect('appearanceMode').globalValue;
+    if (oldVal !== undefined) {
+        if (newColorsConfig.inspect('appearanceMode').globalValue === undefined) {
+            newColorsConfig.update('appearanceMode', oldVal, vscode.ConfigurationTarget.Global);
+        }
+        oldAppearanceConfig.update('appearanceMode', undefined, vscode.ConfigurationTarget.Global);
+    }
+
     // Create the interface brain
     providerInstance = new ShortcutsWebviewProvider(context.extensionUri, context.globalState);
 
@@ -491,7 +528,13 @@ function activate(context) {
             'colorPicker',
             'Color Theme Editor',
             vscode.ViewColumn.Active,
-            { enableScripts: true }
+            {
+                enableScripts: true,
+                localResourceRoots: [
+                    vscode.Uri.joinPath(context.extensionUri, 'webview'),
+                    vscode.Uri.joinPath(context.extensionUri, 'media')
+                ]
+            }
         );
 
         colorPickerPanel.onDidDispose(() => {
@@ -521,15 +564,27 @@ function activate(context) {
         colorPickerPanel.webview.onDidReceiveMessage(
             async message => {
                 if (message.command === 'updateSetting') {
-                    if (message.key === 'appearanceMode') {
-                        const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer.appearance');
-                        await config.update(message.key, message.value, vscode.ConfigurationTarget.Global);
+                    const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
+                    
+                    if (message.key === 'appearanceMode' && message.value === 'Native') {
+                        // Remove line from settings.json when resetting to default
+                        await config.update(message.key, undefined, vscode.ConfigurationTarget.Global);
+                    } else if (message.key === 'colorProfile' && message.value === 'VS Code Native') {
+                        // Remove color profile and all custom color overrides from settings.json
+                        await config.update(message.key, undefined, vscode.ConfigurationTarget.Global);
+                        const keysToClean = [
+                            'textColor', 'titleBackgroundColor', 'keysBackgroundColor', 
+                            'bubbleColor', 'searchbarBackgroundColor', 'searchbarTextColor', 
+                            'alternateRowColor', 'scrollbarColor'
+                        ];
+                        for (const k of keysToClean) {
+                            await config.update(k, undefined, vscode.ConfigurationTarget.Global);
+                        }
                     } else {
-                        const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
                         await config.update(message.key, message.value, vscode.ConfigurationTarget.Global);
                         
                         // Force profile to 'Custom' if colors are manually changed
-                        if (message.key !== 'colorProfile') {
+                        if (message.key !== 'colorProfile' && message.key !== 'appearanceMode') {
                             if (config.get('colorProfile') !== 'Custom') {
                                 await config.update('colorProfile', 'Custom', vscode.ConfigurationTarget.Global);
                             }
@@ -554,7 +609,7 @@ function activate(context) {
 function deactivate() {}
 
 function getColorPickerHtml(configColors, configAppearance) {
-    const appearanceMode = configAppearance.get('appearanceMode') || 'Native';
+    const appearanceMode = configColors.get('appearanceMode') || 'Native';
     const colorProfile = configColors.get('colorProfile') || 'VS Code Native';
     
     const textColor = configColors.get('textColor') || '#cccccc';
@@ -572,6 +627,7 @@ function getColorPickerHtml(configColors, configAppearance) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Color Theme Editor</title>
     <style>
