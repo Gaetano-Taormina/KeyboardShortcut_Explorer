@@ -4,7 +4,7 @@
   "description": "A fantastic extension to explore your keyboard shortcuts",
   "version": "1.0.7",
   "publisher": "GaetanoTaormina",
-  "icon": "media/icon.png",
+  "icon": "assets/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Gaetano-Taormina/KeyboardShortcut_Explorer.git"
@@ -17,13 +17,23 @@
     "Other"
   ],
   "main": "./src/extension.js",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "lint": "oxlint"
+  },
   "contributes": {
     "configuration": {
       "title": "KeyboardShortcut Explorer",
       "properties": {
         "keyboardshortcut-explorer.colors.appearanceMode": {
           "type": "string",
-          "enum": ["Native", "Dark", "Light", "High Contrast"],
+          "enum": [
+            "Native",
+            "Dark",
+            "Light",
+            "High Contrast"
+          ],
           "default": "Native",
           "description": "Force the overall appearance mode. 'Native' uses the current VS Code theme."
         },
@@ -34,7 +44,12 @@
         },
         "keyboardshortcut-explorer.colors.colorProfile": {
           "type": "string",
-          "enum": ["VS Code Native", "Alternative 1", "Alternative 2", "Custom"],
+          "enum": [
+            "VS Code Native",
+            "Alternative 1",
+            "Alternative 2",
+            "Custom"
+          ],
           "default": "VS Code Native",
           "description": "Choose a color profile. Switches to Custom if manual colors are edited."
         },
@@ -193,5 +208,16 @@
       ]
     }
   },
-  "activationEvents": []
+  "activationEvents": [],
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "jimp": "^1.6.1",
+    "oxlint": "^1.80.0",
+    "sass": "^1.103.1",
+    "vite": "^8.2.2"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
 }

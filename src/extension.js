@@ -30,8 +30,8 @@ class ShortcutsWebviewProvider {
         webviewView.webview.options = {
             enableScripts: true,
             localResourceRoots: [
-                vscode.Uri.joinPath(this._extensionUri, 'webview'),
-                vscode.Uri.joinPath(this._extensionUri, 'media')
+                vscode.Uri.joinPath(this._extensionUri, 'dist'),
+                vscode.Uri.joinPath(this._extensionUri, 'assets')
             ]
         };
 
@@ -64,6 +64,9 @@ class ShortcutsWebviewProvider {
         this._view.webview.onDidReceiveMessage(
             async message => {
                 switch (message.command) {
+                    case 'requestInitData':
+                        if (this._lastDataPayload) this.postMessage(this._lastDataPayload);
+                        break;
                     case 'updateHiddenExtensions':
                         await this._globalState.update('hiddenExtensions', message.hiddenList);
                         break;
@@ -110,10 +113,7 @@ class ShortcutsWebviewProvider {
     updateWebview() {
         if (!this._view) return;
 
-        // 1. Retrieve all available shortcuts (all of them, without filters)
         const shortcuts = this.getShortcuts();
-        
-        // 2. Read the preferences set by the user in the Settings
         const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer');
         const settings = {
             colorProfile: config.get('colors.colorProfile'),
@@ -136,19 +136,15 @@ class ShortcutsWebviewProvider {
             dyslexiaLetterSpacing: config.get('accessibility.dyslexiaLetterSpacing')
         };
 
-        // 3. Retrieve lists for the custom extensions menu and saved preferences
         let hiddenExtensions = this._globalState.get('hiddenExtensions') || [];
         const knownExtensions = this._globalState.get('knownExtensions') || [];
         const hasInitializedHidden = this._globalState.get('hasInitializedHidden');
         let needsUpdate = false;
 
-        // All discovered extensions and categories (both system and user's)
-        // are hidden by default to keep the interface clean, unless 
-        // they were explicitly activated previously.
         for (const ext of this._availableExtensions) {
             if (!knownExtensions.includes(ext)) {
-                hiddenExtensions.push(ext); // Hide it by default
-                knownExtensions.push(ext);  // And mark it as known
+                hiddenExtensions.push(ext);
+                knownExtensions.push(ext);
                 needsUpdate = true;
             }
         }
@@ -163,7 +159,6 @@ class ShortcutsWebviewProvider {
         const categoryOrder = this._globalState.get('categoryOrder') || [];
         const availableExtensions = this._availableExtensions;
 
-        // Update Disclaimer management
         let currentVersion = "1.0.7";
         try {
             const packageJsonPath = path.join(this._extensionUri.fsPath, 'package.json');
@@ -175,40 +170,43 @@ class ShortcutsWebviewProvider {
         const lastVersion = this._globalState.get('lastVersion');
         const showDisclaimer = lastVersion !== currentVersion;
 
-        // 4. Prepare safe links (URI) for our CSS and JS files
-        const stylePath = vscode.Uri.joinPath(this._extensionUri, 'webview', 'style.css');
-        const scriptPath = vscode.Uri.joinPath(this._extensionUri, 'webview', 'script.js');
-        const searchBarPath = vscode.Uri.joinPath(this._extensionUri, 'webview', 'components', 'searchBar.js');
-        const styleUri = this._view.webview.asWebviewUri(stylePath);
-        const scriptUri = this._view.webview.asWebviewUri(scriptPath);
-        const searchBarUri = this._view.webview.asWebviewUri(searchBarPath);
+        this._lastDataPayload = {
+            command: 'initData',
+            shortcutsData: shortcuts,
+            settings: settings,
+            hiddenExtensions: hiddenExtensions,
+            availableExtensions: availableExtensions,
+            builtInExtensions: this._builtInExtensions,
+            pinnedCategories: pinnedCategories,
+            categoryOrder: categoryOrder,
+            showDisclaimer: showDisclaimer,
+            version: currentVersion
+        };
+        
+        // Push the payload if UI is already loaded
+        this.postMessage(this._lastDataPayload);
 
-        // 5. Read the index.html file which contains the "skeleton" of the interface
-        const htmlPath = vscode.Uri.joinPath(this._extensionUri, 'webview', 'index.html');
-        let htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
+        const scriptUri = this._view.webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'assets', 'main.js'));
+        const styleUri = this._view.webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'assets', 'main.css'));
+
+        const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${this._view.webview.cspSource} 'unsafe-inline'; script-src ${this._view.webview.cspSource} 'unsafe-inline'; font-src ${this._view.webview.cspSource};">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Shortcut Explorer</title>
+    <link rel="stylesheet" href="${styleUri}">
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="${scriptUri}"></script>
+</body>
+</html>`;
         
-        // Inject our real data into the HTML replacing placeholder variables
-        htmlContent = htmlContent.replace('const INJECTED_DATA = null;', `const INJECTED_DATA = ${JSON.stringify(shortcuts)};`);
-        htmlContent = htmlContent.replace('const INJECTED_SETTINGS = null;', `const INJECTED_SETTINGS = ${JSON.stringify(settings)};`);
-        htmlContent = htmlContent.replace('const INJECTED_HIDDEN_EXTENSIONS = null;', `const INJECTED_HIDDEN_EXTENSIONS = ${JSON.stringify(hiddenExtensions)};`);
-        htmlContent = htmlContent.replace('const INJECTED_AVAILABLE_EXTENSIONS = null;', `const INJECTED_AVAILABLE_EXTENSIONS = ${JSON.stringify(availableExtensions)};`);
-        htmlContent = htmlContent.replace('const INJECTED_BUILTIN_EXTENSIONS = null;', `const INJECTED_BUILTIN_EXTENSIONS = ${JSON.stringify(this._builtInExtensions)};`);
-        htmlContent = htmlContent.replace('const INJECTED_PINNED_CATEGORIES = null;', `const INJECTED_PINNED_CATEGORIES = ${JSON.stringify(pinnedCategories)};`);
-        htmlContent = htmlContent.replace('const INJECTED_CATEGORY_ORDER = null;', `const INJECTED_CATEGORY_ORDER = ${JSON.stringify(categoryOrder)};`);
-        htmlContent = htmlContent.replace('const INJECTED_SHOW_DISCLAIMER = false;', `const INJECTED_SHOW_DISCLAIMER = ${showDisclaimer};`);
-        htmlContent = htmlContent.replace('const INJECTED_VERSION = "1.0.7";', `const INJECTED_VERSION = "${currentVersion}";`);
-        htmlContent = htmlContent.replace('{{styleUri}}', styleUri.toString());
-        htmlContent = htmlContent.replace('{{scriptUri}}', scriptUri.toString());
-        htmlContent = htmlContent.replace('{{searchBarUri}}', searchBarUri.toString());
-        htmlContent = htmlContent.replace(/{{cspSource}}/g, this._view.webview.cspSource);
-        
-        // Tell VS Code to display our modified HTML
         this._view.webview.html = htmlContent;
     }
 
-    /**
-     * Allows sending commands from our extension to the HTML interface (the frontend)
-     */
     postMessage(message) {
         if (this._view) {
             this._view.webview.postMessage(message);
@@ -531,8 +529,8 @@ function activate(context) {
             {
                 enableScripts: true,
                 localResourceRoots: [
-                    vscode.Uri.joinPath(context.extensionUri, 'webview'),
-                    vscode.Uri.joinPath(context.extensionUri, 'media')
+                    vscode.Uri.joinPath(context.extensionUri, 'dist'),
+                    vscode.Uri.joinPath(context.extensionUri, 'assets')
                 ]
             }
         );
@@ -541,18 +539,31 @@ function activate(context) {
             colorPickerPanel = null;
         }, null, context.subscriptions);
 
-        const updatePanelHtml = () => {
+        
+        colorPickerPanel.webview.html = getColorPickerHtml(context.extensionUri, colorPickerPanel.webview);
+
+        const sendSettingsToPicker = () => {
             const configColors = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
             const configAppearance = vscode.workspace.getConfiguration('keyboardshortcut-explorer.appearance');
-            colorPickerPanel.webview.html = getColorPickerHtml(configColors, configAppearance);
+            const settings = {
+                appearanceMode: configColors.get('appearanceMode') || 'Native',
+                colorProfile: configColors.get('colorProfile') || 'VS Code Native',
+                textColor: configColors.get('textColor') || '#cccccc',
+                titleBackgroundColor: configColors.get('titleBackgroundColor') || '#323232',
+                keysBackgroundColor: configColors.get('keysBackgroundColor') || '#2b2b2b',
+                bubbleColor: configColors.get('bubbleColor') || '#252526',
+                searchbarBackgroundColor: configColors.get('searchbarBackgroundColor') || '#3c3c3c',
+                searchbarTextColor: configColors.get('searchbarTextColor') || '#cccccc',
+                alternateRowColor: configColors.get('alternateRowColor') || '#82828233'
+            };
+            colorPickerPanel.webview.postMessage({ command: 'loadSettings', settings });
         };
 
-        updatePanelHtml();
 
         // If the user changes settings via the configuration file, we update the UI picker
         const configListener = vscode.workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration('keyboardshortcut-explorer.colors') || e.affectsConfiguration('keyboardshortcut-explorer.appearance')) {
-                updatePanelHtml();
+                sendSettingsToPicker();
             }
         });
         
@@ -561,16 +572,17 @@ function activate(context) {
         });
 
         // Listen for messages (the new colors chosen by the user) and save them in VS Code
+        
         colorPickerPanel.webview.onDidReceiveMessage(
             async message => {
-                if (message.command === 'updateSetting') {
+                if (message.command === 'requestSettings') {
+                    sendSettingsToPicker();
+                } else if (message.command === 'updateSetting') {
                     const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
                     
                     if (message.key === 'appearanceMode' && message.value === 'Native') {
-                        // Remove line from settings.json when resetting to default
                         await config.update(message.key, undefined, vscode.ConfigurationTarget.Global);
                     } else if (message.key === 'colorProfile' && message.value === 'VS Code Native') {
-                        // Remove color profile and all custom color overrides from settings.json
                         await config.update(message.key, undefined, vscode.ConfigurationTarget.Global);
                         const keysToClean = [
                             'textColor', 'titleBackgroundColor', 'keysBackgroundColor', 
@@ -582,8 +594,6 @@ function activate(context) {
                         }
                     } else {
                         await config.update(message.key, message.value, vscode.ConfigurationTarget.Global);
-                        
-                        // Force profile to 'Custom' if colors are manually changed
                         if (message.key !== 'colorProfile' && message.key !== 'appearanceMode') {
                             if (config.get('colorProfile') !== 'Custom') {
                                 await config.update('colorProfile', 'Custom', vscode.ConfigurationTarget.Global);
@@ -595,6 +605,7 @@ function activate(context) {
             undefined,
             context.subscriptions
         );
+
     }));
 
     // Listen for events: if the user changes font or color from VS Code Settings,
@@ -608,275 +619,22 @@ function activate(context) {
 
 function deactivate() {}
 
-function getColorPickerHtml(configColors, configAppearance) {
-    const appearanceMode = configColors.get('appearanceMode') || 'Native';
-    const colorProfile = configColors.get('colorProfile') || 'VS Code Native';
-    
-    const textColor = configColors.get('textColor') || '#cccccc';
-    const titleBackgroundColor = configColors.get('titleBackgroundColor') || '#323232';
-    const keysBackgroundColor = configColors.get('keysBackgroundColor') || '#2b2b2b';
-    const bubbleColor = configColors.get('bubbleColor') || '#252526';
-    const searchbarBackgroundColor = configColors.get('searchbarBackgroundColor') || '#3c3c3c';
-    const searchbarTextColor = configColors.get('searchbarTextColor') || '#cccccc';
-    const alternateRowColor = configColors.get('alternateRowColor') || '#82828233';
-
-    // Remove any alpha channels that might mess up the input type="color"
-    const toHex6 = (color) => color && color.length > 7 ? color.substring(0, 7) : color;
+function getColorPickerHtml(extensionUri, webview) {
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist', 'assets', 'colorPicker.js'));
+    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist', 'assets', 'colorPicker.css'));
 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource};">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Color Theme Editor</title>
-    <style>
-        body {
-            font-family: var(--vscode-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
-            padding: 10px 0;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: var(--vscode-editor-background);
-            overflow: hidden;
-        }
-        .dashboard {
-            background: rgba(120, 120, 120, 0.05);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(120, 120, 120, 0.2);
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            width: 85%;
-            max-width: 600px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: auto;
-        }
-        .header {
-            grid-column: 1 / -1;
-            text-align: center;
-            margin-bottom: 2px;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 600;
-            background: linear-gradient(90deg, #ff8a00, #e52e71);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .header p {
-            color: var(--vscode-descriptionForeground, #999);
-            font-size: 11px;
-            margin-top: 4px;
-            margin-bottom: 4px;
-        }
-        .section-title {
-            grid-column: 1 / -1;
-            font-size: 12px;
-            font-weight: bold;
-            color: var(--vscode-textPreformat-foreground, #fff);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 4px;
-            margin-bottom: -6px;
-            border-bottom: 1px solid rgba(120, 120, 120, 0.2);
-            padding-bottom: 2px;
-        }
-        .color-control {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .color-control:last-child {
-            grid-column: 1 / -1;
-            justify-self: center;
-            width: 100%;
-            max-width: 290px;
-        }
-        .color-control label {
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--vscode-foreground, #ccc);
-        }
-        .color-input-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(0, 0, 0, 0.1);
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(120, 120, 120, 0.2);
-            transition: border-color 0.2s;
-        }
-        .color-input-wrapper:hover {
-            border-color: var(--vscode-focusBorder, #007acc);
-        }
-        input[type="color"] {
-            -webkit-appearance: none;
-            border: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            padding: 0;
-            background: none;
-        }
-        input[type="color"]::-webkit-color-swatch-wrapper {
-            padding: 0;
-        }
-        input[type="color"]::-webkit-color-swatch {
-            border: 2px solid rgba(120, 120, 120, 0.3);
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .hex-display, .dropdown {
-            font-family: var(--vscode-editor-font-family, monospace);
-            font-size: 11px;
-            color: var(--vscode-textPreformat-foreground, #cecece);
-            background: transparent;
-            border: none;
-            outline: none;
-            width: 100%;
-        }
-        .dropdown {
-            cursor: pointer;
-        }
-        .dropdown option {
-            background-color: var(--vscode-editor-background, #1e1e1e);
-            color: var(--vscode-foreground, #ccc);
-        }
-        .hex-display {
-            text-transform: uppercase;
-        }
-        @media (max-width: 450px) {
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
-            .color-control:last-child {
-                max-width: 100%;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="${styleUri}">
 </head>
 <body>
-    <div class="dashboard">
-        <div class="header">
-            <h1>Color Theme Editor</h1>
-            <p>Choose colors and theme for your interface. Changes are saved in real-time!</p>
-        </div>
-        
-        <div class="section-title">Basic Settings</div>
-        
-        <div class="color-control">
-            <label>General Theme (Appearance)</label>
-            <div class="color-input-wrapper">
-                <select id="appearanceMode" class="dropdown">
-                    <option value="Native" ${appearanceMode === 'Native' ? 'selected' : ''}>Native (Use VS Code Theme)</option>
-                    <option value="Dark" ${appearanceMode === 'Dark' ? 'selected' : ''}>Force Dark</option>
-                    <option value="Light" ${appearanceMode === 'Light' ? 'selected' : ''}>Force Light</option>
-                    <option value="High Contrast" ${appearanceMode === 'High Contrast' ? 'selected' : ''}>Force High Contrast</option>
-                </select>
-            </div>
-        </div>
-        <div class="color-control">
-            <label>Color Profile (Profile)</label>
-            <div class="color-input-wrapper">
-                <select id="colorProfile" class="dropdown">
-                    <option value="VS Code Native" ${colorProfile === 'VS Code Native' ? 'selected' : ''}>VS Code Native</option>
-                    <option value="Alternative 1" ${colorProfile === 'Alternative 1' ? 'selected' : ''}>Alternative 1</option>
-                    <option value="Alternative 2" ${colorProfile === 'Alternative 2' ? 'selected' : ''}>Alternative 2</option>
-                    <option value="Custom" ${colorProfile === 'Custom' ? 'selected' : ''}>Custom (Use Manual Colors)</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="section-title">Custom Colors</div>
-        
-        <div class="color-control">
-            <label>General Text</label>
-            <div class="color-input-wrapper">
-                <input type="color" id="textColor" value="${toHex6(textColor)}">
-                <input type="text" class="hex-display" value="${toHex6(textColor)}" readonly>
-            </div>
-        </div>
-        <div class="color-control">
-            <label>Title Background</label>
-            <div class="color-input-wrapper">
-                <input type="color" id="titleBackgroundColor" value="${toHex6(titleBackgroundColor)}">
-                <input type="text" class="hex-display" value="${toHex6(titleBackgroundColor)}" readonly>
-            </div>
-        </div>
-        <div class="color-control">
-            <label>Keys Background</label>
-            <div class="color-input-wrapper">
-                <input type="color" id="keysBackgroundColor" value="${toHex6(keysBackgroundColor)}">
-                <input type="text" class="hex-display" value="${toHex6(keysBackgroundColor)}" readonly>
-            </div>
-        </div>
-        <div class="color-control">
-            <label>Container Background</label>
-            <div class="color-input-wrapper">
-                <input type="color" id="bubbleColor" value="${toHex6(bubbleColor)}">
-                <input type="text" class="hex-display" value="${toHex6(bubbleColor)}" readonly>
-            </div>
-        </div>
-        <div class="color-control">
-            <label>Searchbar Background</label>
-            <div class="color-input-wrapper">
-                <input type="color" id="searchbarBackgroundColor" value="${toHex6(searchbarBackgroundColor)}">
-                <input type="text" class="hex-display" value="${toHex6(searchbarBackgroundColor)}" readonly>
-            </div>
-        </div>
-        <div class="color-control">
-            <label>Searchbar Text</label>
-            <div class="color-input-wrapper">
-                <input type="color" id="searchbarTextColor" value="${toHex6(searchbarTextColor)}">
-                <input type="text" class="hex-display" value="${toHex6(searchbarTextColor)}" readonly>
-            </div>
-        </div>
-        <div class="color-control">
-            <label>Alternate Rows</label>
-            <div class="color-input-wrapper">
-                <input type="color" id="alternateRowColor" value="${toHex6(alternateRowColor)}">
-                <input type="text" class="hex-display" value="${toHex6(alternateRowColor)}" readonly>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const vscode = acquireVsCodeApi();
-
-        // Listener for Color Pickers
-        document.querySelectorAll('input[type="color"]').forEach(input => {
-            input.addEventListener('input', function(e) {
-                const hexValue = e.target.value;
-                e.target.nextElementSibling.value = hexValue.toUpperCase();
-                
-                vscode.postMessage({
-                    command: 'updateSetting',
-                    key: e.target.id,
-                    value: hexValue
-                });
-            });
-        });
-
-        // Listener for dropdowns (Appearance Mode, Color Profile)
-        document.querySelectorAll('select.dropdown').forEach(select => {
-            select.addEventListener('change', function(e) {
-                vscode.postMessage({
-                    command: 'updateSetting',
-                    key: e.target.id,
-                    value: e.target.value
-                });
-            });
-        });
-    </script>
+    <div id="root"></div>
+    <script type="module" src="${scriptUri}"></script>
 </body>
 </html>`;
 }

@@ -1,0 +1,18 @@
+{
+  "env": {
+    "browser": true
+  },
+  "globals": {
+    "vscode": "readonly"
+  },
+  "rules": {
+    "no-debugger": "error",
+    "no-unused-vars": "warn"
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "assets/**",
+    "node_modules/**",
+    ".vscode/**"
+  ]
+}
