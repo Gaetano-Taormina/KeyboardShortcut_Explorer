@@ -16,7 +16,6 @@ async function cropWhiteBorders(imagePath) {
             const r = this.bitmap.data[idx + 0];
             const g = this.bitmap.data[idx + 1];
             const b = this.bitmap.data[idx + 2];
-            const a = this.bitmap.data[idx + 3];
 
             // If pixel is not "white", update bounding box
             if (!(r > 240 && g > 240 && b > 240)) {

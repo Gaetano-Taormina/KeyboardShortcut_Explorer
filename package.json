@@ -4,7 +4,7 @@
   "description": "A fantastic extension to explore your keyboard shortcuts",
   "version": "1.0.7",
   "publisher": "GaetanoTaormina",
-  "icon": "assets/icon.png",
+  "icon": "src/assets/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Gaetano-Taormina/KeyboardShortcut_Explorer.git"
@@ -16,7 +16,7 @@
   "categories": [
     "Other"
   ],
-  "main": "./src/extension.js",
+  "main": "./backend/extension.js",
   "scripts": {
     "build": "vite build",
     "dev": "vite",

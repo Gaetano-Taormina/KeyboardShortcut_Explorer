@@ -47,8 +47,6 @@ export default function ColorPicker() {
     });
   };
 
-  const toHex6 = (color) => color && color.length > 7 ? color.substring(0, 7) : color;
-
   return (
     <div className="dashboard">
       <div className="header">
