@@ -9,6 +9,9 @@ export function useVsCodeData() {
   const [categoryOrder, setCategoryOrder] = useState([]);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [version, setVersion] = useState("1.0.0");
+  const [availableExtensions, setAvailableExtensions] = useState([]);
+  const [isSearchVisible, setIsSearchVisible] = useState(true);
+  const [isCustomMenuVisible, setIsCustomMenuVisible] = useState(false);
 
   useEffect(() => {
     const handleMessage = (event) => {
@@ -23,6 +26,11 @@ export function useVsCodeData() {
         if (message.categoryOrder) setCategoryOrder(message.categoryOrder);
         if (message.showDisclaimer !== undefined) setShowDisclaimer(message.showDisclaimer);
         if (message.version) setVersion(message.version);
+        if (message.availableExtensions) setAvailableExtensions(message.availableExtensions);
+      } else if (message.command === 'toggleSearch') {
+        setIsSearchVisible(prev => !prev);
+      } else if (message.command === 'toggleCustomMenu') {
+        setIsCustomMenuVisible(prev => !prev);
       }
     };
     window.addEventListener('message', handleMessage);
@@ -118,6 +126,21 @@ export function useVsCodeData() {
     handleDragEnd,
     togglePin,
     dismissDisclaimer,
-    orderedCats: getOrderedCategories()
+    orderedCats: getOrderedCategories(),
+    isSearchVisible,
+    isCustomMenuVisible,
+    setIsCustomMenuVisible,
+    availableExtensions,
+    hiddenExtensions,
+    toggleExtensionVisibility: (ext) => {
+        let newHidden;
+        if (hiddenExtensions.includes(ext)) {
+            newHidden = hiddenExtensions.filter(e => e !== ext);
+        } else {
+            newHidden = [...hiddenExtensions, ext];
+        }
+        setHiddenExtensions(newHidden);
+        vscode.postMessage({ command: 'updateHiddenExtensions', hiddenList: newHidden });
+    }
   };
 }

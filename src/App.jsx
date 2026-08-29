@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useVsCodeData } from './hooks/useVsCodeData';
 import { CategoryGroup } from './components/CategoryGroup';
+import { ExtensionsMenu } from './components/ExtensionsMenu';
 import './App.scss';
 
 export default function App() {
@@ -11,7 +12,13 @@ export default function App() {
     handleDragEnd,
     togglePin,
     dismissDisclaimer,
-    orderedCats
+    orderedCats,
+    isSearchVisible,
+    isCustomMenuVisible,
+    setIsCustomMenuVisible,
+    availableExtensions,
+    hiddenExtensions,
+    toggleExtensionVisibility
   } = useVsCodeData();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,16 +32,27 @@ export default function App() {
         </div>
       )}
 
-      <div className="search-container">
-        <div className="search-input-wrapper">
-          <input 
-            type="text" 
-            placeholder="Search (e.g. Save, Ctrl+S)..." 
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
+      {isCustomMenuVisible && (
+        <ExtensionsMenu 
+          availableExtensions={availableExtensions}
+          hiddenExtensions={hiddenExtensions}
+          onToggleExtension={toggleExtensionVisibility}
+          onClose={() => setIsCustomMenuVisible(false)}
+        />
+      )}
+
+      {isSearchVisible && (
+        <div className="search-container">
+          <div className="search-input-wrapper">
+            <input 
+              type="text" 
+              placeholder="Search (e.g. Save, Ctrl+S)..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div id="shortcuts-container" className="shortcuts-container">
         {orderedCats.map(cat => (
