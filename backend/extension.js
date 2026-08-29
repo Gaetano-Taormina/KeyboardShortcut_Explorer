@@ -39,6 +39,10 @@ function activate(context) {
         if (providerInstance) providerInstance.postMessage({ command: 'toggleCustomMenu' });
     }));
 
+    context.subscriptions.push(vscode.commands.registerCommand('keyboardshortcut-explorer.toggleReorderMode', () => {
+        if (providerInstance) providerInstance.postMessage({ command: 'toggleReorderMode' });
+    }));
+
     // Register Color Picker Panel
     ColorPickerPanel.register(context);
 

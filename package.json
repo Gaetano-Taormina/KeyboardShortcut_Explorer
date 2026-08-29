@@ -161,7 +161,13 @@
       },
       {
         "command": "keyboardshortcut-explorer.toggleExtensions",
-        "title": "Customize View..."
+        "title": "Manage Extensions",
+        "icon": "$(add)"
+      },
+      {
+        "command": "keyboardshortcut-explorer.toggleReorderMode",
+        "title": "Grid Reorder Mode",
+        "icon": "$(table)"
       },
       {
         "command": "keyboardshortcut-explorer.openSettings",
@@ -181,9 +187,19 @@
     "menus": {
       "view/title": [
         {
-          "command": "keyboardshortcut-explorer.openKeybindings",
+          "command": "keyboardshortcut-explorer.toggleExtensions",
+          "when": "view == keyboardShortcutsView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "keyboardshortcut-explorer.toggleReorderMode",
           "when": "view == keyboardShortcutsView",
           "group": "navigation@2"
+        },
+        {
+          "command": "keyboardshortcut-explorer.openKeybindings",
+          "when": "view == keyboardShortcutsView",
+          "group": "navigation@3"
         },
         {
           "command": "keyboardshortcut-explorer.openSettings",
@@ -195,11 +211,7 @@
           "when": "view == keyboardShortcutsView",
           "group": "1_more@1"
         },
-        {
-          "command": "keyboardshortcut-explorer.toggleExtensions",
-          "when": "view == keyboardShortcutsView",
-          "group": "1_more@2"
-        },
+
         {
           "command": "keyboardshortcut-explorer.openColorPicker",
           "when": "view == keyboardShortcutsView",

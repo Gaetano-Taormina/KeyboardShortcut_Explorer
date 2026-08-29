@@ -57,6 +57,9 @@ class ShortcutsWebviewProvider {
                     case 'dismissDisclaimer':
                         await this._globalState.update('lastVersion', message.version);
                         break;
+                    case 'dismissGridTutorial':
+                        await this._globalState.update('hasSeenGridTutorial', true);
+                        break;
                     case 'updateCategoryOrder':
                         await this._globalState.update('categoryOrder', message.orderList);
                         break;
@@ -147,6 +150,7 @@ class ShortcutsWebviewProvider {
         }
         const lastVersion = this._globalState.get('lastVersion');
         const showDisclaimer = lastVersion !== currentVersion;
+        const hasSeenGridTutorial = this._globalState.get('hasSeenGridTutorial') || false;
 
         this._lastDataPayload = {
             command: 'initData',
@@ -158,6 +162,7 @@ class ShortcutsWebviewProvider {
             pinnedCategories: pinnedCategories,
             categoryOrder: categoryOrder,
             showDisclaimer: showDisclaimer,
+            showGridTutorial: !hasSeenGridTutorial,
             version: currentVersion
         };
         

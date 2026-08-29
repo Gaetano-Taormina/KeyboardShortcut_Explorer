@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useVsCodeData } from './hooks/useVsCodeData';
 import { CategoryGroup } from './components/CategoryGroup';
 import { ExtensionsMenu } from './components/ExtensionsMenu';
+import { ReorderGrid } from './components/ReorderGrid';
 import './App.scss';
 
 export default function App() {
@@ -12,9 +13,12 @@ export default function App() {
     handleDragEnd,
     togglePin,
     dismissDisclaimer,
+    dismissGridTutorial,
+    showGridTutorial,
     orderedCats,
     isSearchVisible,
     isCustomMenuVisible,
+    isReorderMode,
     setIsCustomMenuVisible,
     availableExtensions,
     hiddenExtensions,
@@ -54,21 +58,32 @@ export default function App() {
         </div>
       )}
 
-      <div id="shortcuts-container" className="shortcuts-container">
-        {orderedCats.map(cat => (
-          <CategoryGroup 
-            key={cat}
-            category={cat}
-            shortcuts={shortcutsData[cat]}
-            isPinned={pinnedCategories.includes(cat)}
-            onTogglePin={() => togglePin(cat)}
-            searchQuery={searchQuery}
-            allCategories={orderedCats}
-            onDragEnd={handleDragEnd}
-          />
-        ))}
-        {orderedCats.length === 0 && <div id="no-results">No categories to display.</div>}
-      </div>
+      {isReorderMode ? (
+        <ReorderGrid 
+          categories={orderedCats}
+          pinnedCategories={pinnedCategories}
+          onTogglePin={togglePin}
+          onDragEnd={handleDragEnd}
+          showGridTutorial={showGridTutorial}
+          dismissGridTutorial={dismissGridTutorial}
+        />
+      ) : (
+        <div id="shortcuts-container" className="shortcuts-container">
+          {orderedCats.map(cat => (
+            <CategoryGroup 
+              key={cat}
+              category={cat}
+              shortcuts={shortcutsData[cat]}
+              isPinned={pinnedCategories.includes(cat)}
+              onTogglePin={() => togglePin(cat)}
+              searchQuery={searchQuery}
+              allCategories={orderedCats}
+              onDragEnd={handleDragEnd}
+            />
+          ))}
+          {orderedCats.length === 0 && <div id="no-results">No categories to display.</div>}
+        </div>
+      )}
     </div>
   );
 }

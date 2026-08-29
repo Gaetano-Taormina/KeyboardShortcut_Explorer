@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 
 export function CategoryGroup({ category, shortcuts, isPinned, onTogglePin, searchQuery, allCategories, onDragEnd }) {

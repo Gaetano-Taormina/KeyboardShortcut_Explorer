@@ -12,6 +12,8 @@ export function useVsCodeData() {
   const [availableExtensions, setAvailableExtensions] = useState([]);
   const [isSearchVisible, setIsSearchVisible] = useState(true);
   const [isCustomMenuVisible, setIsCustomMenuVisible] = useState(false);
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  const [showGridTutorial, setShowGridTutorial] = useState(true);
 
   useEffect(() => {
     const handleMessage = (event) => {
@@ -25,12 +27,15 @@ export function useVsCodeData() {
         if (message.pinnedCategories) setPinnedCategories(message.pinnedCategories);
         if (message.categoryOrder) setCategoryOrder(message.categoryOrder);
         if (message.showDisclaimer !== undefined) setShowDisclaimer(message.showDisclaimer);
+        if (message.showGridTutorial !== undefined) setShowGridTutorial(message.showGridTutorial);
         if (message.version) setVersion(message.version);
         if (message.availableExtensions) setAvailableExtensions(message.availableExtensions);
       } else if (message.command === 'toggleSearch') {
         setIsSearchVisible(prev => !prev);
       } else if (message.command === 'toggleCustomMenu') {
         setIsCustomMenuVisible(prev => !prev);
+      } else if (message.command === 'toggleReorderMode') {
+        setIsReorderMode(prev => !prev);
       }
     };
     window.addEventListener('message', handleMessage);
@@ -101,6 +106,11 @@ export function useVsCodeData() {
     vscode.postMessage({ command: 'dismissDisclaimer', version: version });
   };
 
+  const dismissGridTutorial = () => {
+    setShowGridTutorial(false);
+    vscode.postMessage({ command: 'dismissGridTutorial' });
+  };
+
   const getOrderedCategories = () => {
     const allCategories = Object.keys(shortcutsData);
     const visibleCategories = allCategories.filter(cat => !hiddenExtensions.includes(cat));
@@ -126,9 +136,11 @@ export function useVsCodeData() {
     handleDragEnd,
     togglePin,
     dismissDisclaimer,
+    dismissGridTutorial,
     orderedCats: getOrderedCategories(),
     isSearchVisible,
     isCustomMenuVisible,
+    isReorderMode,
     setIsCustomMenuVisible,
     availableExtensions,
     hiddenExtensions,
