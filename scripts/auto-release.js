@@ -95,10 +95,10 @@ function run() {
     execCommand(`git commit -m "chore: release v${nextVersion} [skip ci]"`);
     execCommand(`git tag v${nextVersion}`);
     
-    // We export the new version to GITHUB_ENV so the workflow can use it
-    if (process.env.GITHUB_ENV) {
-        fs.appendFileSync(process.env.GITHUB_ENV, `NEW_VERSION=${nextVersion}\n`);
-        fs.appendFileSync(process.env.GITHUB_ENV, `SHOULD_RELEASE=true\n`);
+    // We export the new version to GITHUB_OUTPUT so the workflow can use it
+    if (process.env.GITHUB_OUTPUT) {
+        fs.appendFileSync(process.env.GITHUB_OUTPUT, `NEW_VERSION=${nextVersion}\n`);
+        fs.appendFileSync(process.env.GITHUB_OUTPUT, `SHOULD_RELEASE=true\n`);
     }
 
     console.log(`Successfully bumped to v${nextVersion}`);

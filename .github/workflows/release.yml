@@ -38,26 +38,26 @@ jobs:
         run: node scripts/auto-release.js
 
       - name: Push new Commit and Tag
-        if: env.SHOULD_RELEASE == 'true'
+        if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
         run: |
           git push origin main
-          git push origin v${{ env.NEW_VERSION }}
+          git push origin v${{ steps.auto_release.outputs.NEW_VERSION }}
 
       - name: Build Extension
-        if: env.SHOULD_RELEASE == 'true'
+        if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
         run: pnpm run build
 
       - name: Package Extension
-        if: env.SHOULD_RELEASE == 'true'
+        if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
         run: npx vsce package
         
       - name: Create GitHub Release
-        if: env.SHOULD_RELEASE == 'true'
+        if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
         uses: softprops/action-gh-release@v2
         with:
           files: "*.vsix"
-          name: "Release v${{ env.NEW_VERSION }}"
-          tag_name: "v${{ env.NEW_VERSION }}"
+          name: "Release v${{ steps.auto_release.outputs.NEW_VERSION }}"
+          tag_name: "v${{ steps.auto_release.outputs.NEW_VERSION }}"
           draft: false
           prerelease: false
           generate_release_notes: true
@@ -66,4 +66,4 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         run: npx vsce publish -p ${{ env.VSCE_PAT }}
-        if: env.SHOULD_RELEASE == 'true' && env.VSCE_PAT != ''
+        if: steps.auto_release.outputs.SHOULD_RELEASE == 'true' && env.VSCE_PAT != ''
