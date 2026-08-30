@@ -1,0 +1,15 @@
+.vscode/**
+.vscode-test/**
+out/**
+src/**
+node_modules/**
+.gitignore
+.yarnrc
+.env
+.github/**
+*.vsix
+scripts/**
+vite.config.js
+.eslintrc.json
+crop_logo.py
+builds/

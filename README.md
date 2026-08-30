@@ -60,6 +60,12 @@ This extension contributes the following settings grouped by category:
 
 ## Release Notes
 
+### 1.0.8
+
+- **Vite & React Migration**: Completely rebuilt the Webview UI using Vite and React for significantly better performance and maintainability.
+- **Compact UI & Reordering**: Designed an ultra-compact, modern UI optimized specifically for the narrow VS Code sidebar. Added a dedicated Reorder Mode (`+` button) to easily drag, drop, and pin categories.
+- **Automated CI/CD**: Fully automated the build and release process using GitHub Actions and Dependabot for seamless updates to the VS Code Marketplace.
+
 ### 1.0.7
 
 - **Live Marketplace Badges & Review Stars**: Added dynamic, real-time PNG badges to the top of the README featuring current Marketplace version, install counts, average rating scores, and visual rating stars (`★★★★★`) via `vsmarketplacebadges.dev`.
