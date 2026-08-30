@@ -60,6 +60,12 @@ This extension contributes the following settings grouped by category:
 
 ## Release Notes
 
+### 1.0.10
+
+- ci: fix output context in workflow
+- ci: add auto-release script
+- ci: implement automated release workflow
+
 ### 1.0.9
 
 - **Security Fix**: Removed sensitive files from the VSIX package build process to ensure secure Marketplace publishing.
