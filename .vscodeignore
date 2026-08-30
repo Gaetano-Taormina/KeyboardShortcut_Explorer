@@ -2,6 +2,7 @@
 .vscode-test/**
 out/**
 src/**
+!src/assets/icon.png
 node_modules/**
 .gitignore
 .yarnrc
