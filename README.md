@@ -60,6 +60,10 @@ This extension contributes the following settings grouped by category:
 
 ## Release Notes
 
+### 1.0.9
+
+- **Security Fix**: Removed sensitive files from the VSIX package build process to ensure secure Marketplace publishing.
+
 ### 1.0.8
 
 - **Vite & React Migration**: Completely rebuilt the Webview UI using Vite and React for significantly better performance and maintainability.
