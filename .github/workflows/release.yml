@@ -1,0 +1,53 @@
+name: Publish Extension
+
+on:
+  push:
+    tags:
+      - 'v*' # Si attiva quando fai il push di un tag che inizia per "v" (es. v1.0.8)
+
+permissions:
+  contents: write # Necessario per creare la Release su GitHub
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Extension
+        run: pnpm run build
+
+      - name: Package Extension
+        run: npx vsce package
+        
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "*.vsix"
+          name: "Release ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to VS Code Marketplace
+        run: npx vsce publish -p ${{ env.VSCE_PAT }}
+        # Esegue questo step solo se hai impostato il VSCE_PAT nei secret di GitHub
+        if: env.VSCE_PAT != ''

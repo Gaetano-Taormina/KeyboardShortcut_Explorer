@@ -2,7 +2,7 @@
   "name": "keyboardshortcut-explorer",
   "displayName": "Keyboard Shortcuts",
   "description": "A fantastic extension to explore your keyboard shortcuts",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "publisher": "GaetanoTaormina",
   "icon": "src/assets/icon.png",
   "repository": {
@@ -18,7 +18,11 @@
   ],
   "main": "./backend/extension.js",
   "scripts": {
+    "vscode:prepublish": "pnpm run build",
     "build": "vite build",
+    "watch": "vite build --watch",
+    "package:local": "node scripts/package-local.js",
+    "publish:local": "node scripts/publish-local.js",
     "dev": "vite",
     "lint": "oxlint"
   },
@@ -211,7 +215,6 @@
           "when": "view == keyboardShortcutsView",
           "group": "1_more@1"
         },
-
         {
           "command": "keyboardshortcut-explorer.openColorPicker",
           "when": "view == keyboardShortcutsView",
@@ -223,6 +226,7 @@
   "activationEvents": [],
   "devDependencies": {
     "@vitejs/plugin-react": "^6.1.1",
+    "dotenv": "^17.4.2",
     "jimp": "^1.6.1",
     "oxlint": "^1.80.0",
     "sass": "^1.103.1",

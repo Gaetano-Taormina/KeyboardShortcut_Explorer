@@ -137,6 +137,7 @@ export function useVsCodeData() {
     togglePin,
     dismissDisclaimer,
     dismissGridTutorial,
+    showGridTutorial,
     orderedCats: getOrderedCategories(),
     isSearchVisible,
     isCustomMenuVisible,
