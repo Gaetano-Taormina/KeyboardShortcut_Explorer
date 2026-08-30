@@ -1,15 +1,15 @@
 name: Publish Extension
 
 on:
-  push:
-    tags:
-      - 'v*' # Si attiva quando fai il push di un tag che inizia per "v" (es. v1.0.8)
+  workflow_dispatch: # Permette il lancio manuale (Opzione 1)
+  schedule:
+    - cron: '0 0 * * 5' # Ogni venerdì a mezzanotte (UTC) (Opzione automatica)
 
 permissions:
-  contents: write # Necessario per creare la Release su GitHub
+  contents: write # Necessario per creare commit, tag e Release su GitHub
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
     env:
       VSCE_PAT: ${{ secrets.VSCE_PAT }}
@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Recupera tutto lo storico (necessario per estrarre i commit dai tag)
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -31,23 +33,37 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Run Auto-Release Script
+        id: auto_release
+        run: node scripts/auto-release.js
+
+      - name: Push new Commit and Tag
+        if: env.SHOULD_RELEASE == 'true'
+        run: |
+          git push origin main
+          git push origin v${{ env.NEW_VERSION }}
+
       - name: Build Extension
+        if: env.SHOULD_RELEASE == 'true'
         run: pnpm run build
 
       - name: Package Extension
+        if: env.SHOULD_RELEASE == 'true'
         run: npx vsce package
         
       - name: Create GitHub Release
+        if: env.SHOULD_RELEASE == 'true'
         uses: softprops/action-gh-release@v2
         with:
           files: "*.vsix"
-          name: "Release ${{ github.ref_name }}"
+          name: "Release v${{ env.NEW_VERSION }}"
+          tag_name: "v${{ env.NEW_VERSION }}"
           draft: false
           prerelease: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to VS Code Marketplace
         run: npx vsce publish -p ${{ env.VSCE_PAT }}
-        # Esegue questo step solo se hai impostato il VSCE_PAT nei secret di GitHub
-        if: env.VSCE_PAT != ''
+        if: env.SHOULD_RELEASE == 'true' && env.VSCE_PAT != ''
