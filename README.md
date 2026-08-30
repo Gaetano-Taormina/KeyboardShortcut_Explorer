@@ -60,6 +60,10 @@ This extension contributes the following settings grouped by category:
 
 ## Release Notes
 
+### 1.0.11
+
+- fix: allow icon.png in package
+
 ### 1.0.10
 
 - ci: fix output context in workflow
