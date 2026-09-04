@@ -60,6 +60,13 @@ This extension contributes the following settings grouped by category:
 
 ## Release Notes
 
+### 1.0.12
+
+- ci: group dependabot updates into single PRs
+- ci: bump pnpm/action-setup from 3 to 6
+- ci: bump actions/setup-node from 4 to 7
+- ci: bump actions/checkout from 4 to 7
+
 ### 1.0.11
 
 - fix: allow icon.png in package
