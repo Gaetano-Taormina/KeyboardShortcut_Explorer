@@ -60,6 +60,12 @@ This extension contributes the following settings grouped by category:
 
 ## Release Notes
 
+### 1.1.0
+
+- ci: trigger publish extension workflow on push to main
+- feat: implement category grouping, drag-and-drop support, and theme color picker UI components
+- feat: implement webview-based color theme editor with synchronization and workspace configuration management
+
 ### 1.0.12
 
 - ci: group dependabot updates into single PRs
