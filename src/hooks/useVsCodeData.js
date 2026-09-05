@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getPresetPalette, getModeSlotKey } from '../constants/themePresets';
 
 const vscode = window.acquireVsCodeApi ? window.acquireVsCodeApi() : { postMessage: () => {} };
 
@@ -51,20 +52,70 @@ export function useVsCodeData() {
     document.documentElement.style.setProperty('--setting-keys-font-size', s.keysFontSize + 'px');
     document.documentElement.style.setProperty('--setting-title-font-size', s.titleFontSize + 'px');
     
+    // Apply Appearance Mode
+    document.body.classList.remove('theme-force-dark', 'theme-force-light', 'theme-force-hc');
+    if (s.appearanceMode === 'Dark') {
+        document.body.classList.add('theme-force-dark');
+    } else if (s.appearanceMode === 'Light') {
+        document.body.classList.add('theme-force-light');
+    } else if (s.appearanceMode === 'High Contrast') {
+        document.body.classList.add('theme-force-hc');
+    }
+
+    // Always clean potential overridden VS Code internal variables on :root
+    document.documentElement.style.removeProperty('--vscode-textPreformat-foreground');
+    // Clean all custom inline properties so defaults/rules apply cleanly
+    document.documentElement.style.removeProperty('--setting-text-color');
+    document.documentElement.style.removeProperty('--setting-title-bg');
+    document.documentElement.style.removeProperty('--setting-title-color');
+    document.documentElement.style.removeProperty('--setting-keys-bg');
+    document.documentElement.style.removeProperty('--setting-keys-color');
+    document.documentElement.style.removeProperty('--setting-bubble-color');
+    document.documentElement.style.removeProperty('--setting-searchbar-bg');
+    document.documentElement.style.removeProperty('--setting-searchbar-text');
+    document.documentElement.style.removeProperty('--setting-alternate-row-color');
+    document.documentElement.style.removeProperty('--setting-scrollbar-color');
+
+    // Apply Color Profiles
     if (s.colorProfile === "Custom") {
-        document.documentElement.style.setProperty('--setting-text-color', s.textColor);
-        document.documentElement.style.setProperty('--setting-title-bg', s.titleBackgroundColor);
-        document.documentElement.style.setProperty('--setting-keys-bg', s.keysBackgroundColor);
-        document.documentElement.style.setProperty('--vscode-textPreformat-foreground', s.textColor); 
-        document.documentElement.style.setProperty('--setting-bubble-color', s.bubbleColor);
-        document.documentElement.style.setProperty('--setting-searchbar-bg', s.searchbarBackgroundColor);
-        document.documentElement.style.setProperty('--setting-searchbar-text', s.searchbarTextColor);
-        document.documentElement.style.setProperty('--setting-alternate-row-color', s.alternateRowColor);
-    } else {
-        document.documentElement.style.setProperty('--setting-text-color', 'var(--vscode-foreground)');
-        document.documentElement.style.setProperty('--setting-title-bg', 'var(--vscode-editor-inactiveSelectionBackground)');
-        document.documentElement.style.setProperty('--setting-keys-bg', 'var(--vscode-textCodeBlock-background)');
-        document.documentElement.style.setProperty('--setting-bubble-color', 'var(--vscode-sideBar-background)');
+        const slotKey = getModeSlotKey(s.appearanceMode);
+        const customSlot = (s.customThemes && s.customThemes[slotKey]) || {};
+
+        const textColor = customSlot.textColor || s.textColor;
+        const titleBg = customSlot.titleBackgroundColor || s.titleBackgroundColor;
+        const titleColor = customSlot.titleColor || customSlot.textColor || s.textColor;
+        const keysBg = customSlot.keysBackgroundColor || s.keysBackgroundColor;
+        const keysColor = customSlot.keysColor || customSlot.textColor || s.textColor;
+        const bubbleColor = customSlot.bubbleColor || s.bubbleColor;
+        const searchbarBg = customSlot.searchbarBackgroundColor || s.searchbarBackgroundColor;
+        const searchbarText = customSlot.searchbarTextColor || s.searchbarTextColor;
+        const alternateRowColor = customSlot.alternateRowColor || s.alternateRowColor;
+        const scrollbarColor = customSlot.scrollbarColor || s.scrollbarColor;
+
+        if (textColor) document.documentElement.style.setProperty('--setting-text-color', textColor);
+        if (titleBg) document.documentElement.style.setProperty('--setting-title-bg', titleBg);
+        if (titleColor) document.documentElement.style.setProperty('--setting-title-color', titleColor);
+        if (keysBg) document.documentElement.style.setProperty('--setting-keys-bg', keysBg);
+        if (keysColor) document.documentElement.style.setProperty('--setting-keys-color', keysColor);
+        if (bubbleColor) document.documentElement.style.setProperty('--setting-bubble-color', bubbleColor);
+        if (searchbarBg) document.documentElement.style.setProperty('--setting-searchbar-bg', searchbarBg);
+        if (searchbarText) document.documentElement.style.setProperty('--setting-searchbar-text', searchbarText);
+        if (alternateRowColor) document.documentElement.style.setProperty('--setting-alternate-row-color', alternateRowColor);
+        if (scrollbarColor) document.documentElement.style.setProperty('--setting-scrollbar-color', scrollbarColor);
+    } else if (s.colorProfile === "Alternative 1" || s.colorProfile === "Alternative 2") {
+        const palette = getPresetPalette(s.appearanceMode, s.colorProfile);
+        if (palette) {
+            if (palette.textColor) document.documentElement.style.setProperty('--setting-text-color', palette.textColor);
+            if (palette.titleBackgroundColor) document.documentElement.style.setProperty('--setting-title-bg', palette.titleBackgroundColor);
+            if (palette.titleColor) document.documentElement.style.setProperty('--setting-title-color', palette.titleColor);
+            if (palette.keysBackgroundColor) document.documentElement.style.setProperty('--setting-keys-bg', palette.keysBackgroundColor);
+            if (palette.keysColor) document.documentElement.style.setProperty('--setting-keys-color', palette.keysColor);
+            if (palette.bubbleColor) document.documentElement.style.setProperty('--setting-bubble-color', palette.bubbleColor);
+            if (palette.searchbarBackgroundColor) document.documentElement.style.setProperty('--setting-searchbar-bg', palette.searchbarBackgroundColor);
+            if (palette.searchbarTextColor) document.documentElement.style.setProperty('--setting-searchbar-text', palette.searchbarTextColor);
+            if (palette.alternateRowColor) document.documentElement.style.setProperty('--setting-alternate-row-color', palette.alternateRowColor);
+            if (palette.scrollbarColor) document.documentElement.style.setProperty('--setting-scrollbar-color', palette.scrollbarColor);
+        }
     }
 
     if (s.alternateRowColors) {

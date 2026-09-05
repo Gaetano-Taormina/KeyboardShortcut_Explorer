@@ -22,24 +22,6 @@ class ShortcutsWebviewProvider {
             ]
         };
 
-        vscode.workspace.onDidChangeConfiguration(e => {
-            if (e.affectsConfiguration('keyboardshortcut-explorer')) {
-                if (
-                    e.affectsConfiguration('keyboardshortcut-explorer.colors.textColor') ||
-                    e.affectsConfiguration('keyboardshortcut-explorer.colors.titleBackgroundColor') ||
-                    e.affectsConfiguration('keyboardshortcut-explorer.colors.keysBackgroundColor') ||
-                    e.affectsConfiguration('keyboardshortcut-explorer.colors.bubbleColor') ||
-                    e.affectsConfiguration('keyboardshortcut-explorer.colors.scrollbarColor') ||
-                    e.affectsConfiguration('keyboardshortcut-explorer.colors.alternateRowColor')
-                ) {
-                    const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer');
-                    if (config.get('colors.colorProfile') !== 'Custom') {
-                        config.update('colors.colorProfile', 'Custom', vscode.ConfigurationTarget.Global);
-                    }
-                }
-            }
-        });
-
         this.updateWebview();
 
         this._view.webview.onDidReceiveMessage(
@@ -65,24 +47,14 @@ class ShortcutsWebviewProvider {
                         break;
                     case 'updateSetting':
                         const configColors = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
-                        if (message.key === 'appearanceMode' && message.value === 'Native') {
-                            await configColors.update(message.key, undefined, vscode.ConfigurationTarget.Global);
-                        } else if (message.key === 'colorProfile' && message.value === 'VS Code Native') {
-                            await configColors.update(message.key, undefined, vscode.ConfigurationTarget.Global);
-                            const keysToClean = [
-                                'textColor', 'titleBackgroundColor', 'keysBackgroundColor', 
-                                'bubbleColor', 'searchbarBackgroundColor', 'searchbarTextColor', 
-                                'alternateRowColor', 'scrollbarColor'
-                            ];
-                            for (const k of keysToClean) {
-                                await configColors.update(k, undefined, vscode.ConfigurationTarget.Global);
-                            }
+                        if (message.key === 'appearanceMode') {
+                            await configColors.update(message.key, message.value === 'Native' ? undefined : message.value, vscode.ConfigurationTarget.Global);
+                        } else if (message.key === 'colorProfile') {
+                            await configColors.update(message.key, message.value === 'VS Code Native' ? undefined : message.value, vscode.ConfigurationTarget.Global);
                         } else {
                             await configColors.update(message.key, message.value, vscode.ConfigurationTarget.Global);
-                            if (message.key !== 'colorProfile' && message.key !== 'appearanceMode') {
-                                if (configColors.get('colorProfile') !== 'Custom') {
-                                    await configColors.update('colorProfile', 'Custom', vscode.ConfigurationTarget.Global);
-                                }
+                            if (configColors.get('colorProfile') !== 'Custom') {
+                                await configColors.update('colorProfile', 'Custom', vscode.ConfigurationTarget.Global);
                             }
                         }
                         break;
@@ -99,8 +71,10 @@ class ShortcutsWebviewProvider {
         const settings = {
             colorProfile: config.get('colors.colorProfile'),
             appearanceMode: config.get('colors.appearanceMode'),
+            customThemes: config.get('colors.customThemes'),
             alternateRowColors: config.get('appearance.alternateRowColors'),
             alternateRowColor: config.get('colors.alternateRowColor'),
+            scrollbarColor: config.get('colors.scrollbarColor'),
             fontFamily: config.get('typography.fontFamily'),
             fontSize: config.get('typography.fontSize'),
             keysFontSize: config.get('typography.keysFontSize'),

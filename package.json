@@ -60,37 +60,37 @@
         "keyboardshortcut-explorer.colors.textColor": {
           "type": "string",
           "format": "color-hex",
-          "default": "#09090B",
+          "default": "#cccccc",
           "description": "General text color."
         },
         "keyboardshortcut-explorer.colors.titleBackgroundColor": {
           "type": "string",
           "format": "color-hex",
-          "default": "#0C0E0C",
+          "default": "#323232",
           "description": "Background color for the category titles."
         },
         "keyboardshortcut-explorer.colors.keysBackgroundColor": {
           "type": "string",
           "format": "color-hex",
-          "default": "#050505",
+          "default": "#2b2b2b",
           "description": "Background color for the shortcut keys box."
         },
         "keyboardshortcut-explorer.colors.bubbleColor": {
           "type": "string",
           "format": "color-hex",
-          "default": "#080708",
+          "default": "#252526",
           "description": "Color for the chat bubble background."
         },
         "keyboardshortcut-explorer.colors.searchbarBackgroundColor": {
           "type": "string",
           "format": "color-hex",
-          "default": "#4F6287",
+          "default": "#3c3c3c",
           "description": "Background color for the search bar."
         },
         "keyboardshortcut-explorer.colors.searchbarTextColor": {
           "type": "string",
           "format": "color-hex",
-          "default": "#0A0A0B",
+          "default": "#cccccc",
           "description": "Text color for the search bar."
         },
         "keyboardshortcut-explorer.colors.scrollbarColor": {
@@ -102,8 +102,13 @@
         "keyboardshortcut-explorer.colors.alternateRowColor": {
           "type": "string",
           "format": "color-hex",
-          "default": "#405444",
+          "default": "#82828233",
           "description": "Color for the alternating rows when enabled."
+        },
+        "keyboardshortcut-explorer.colors.customThemes": {
+          "type": "object",
+          "default": {},
+          "description": "Saved custom color themes for Light, Dark, High Contrast, and Native modes."
         },
         "keyboardshortcut-explorer.typography.fontFamily": {
           "type": "string",

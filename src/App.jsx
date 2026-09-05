@@ -28,11 +28,16 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
 
   return (
-    <div>
+    <div className="app-container">
       {showDisclaimer && (
-        <div className="disclaimer" style={{backgroundColor: "var(--vscode-editorWarning-background, #cca700)", color: "var(--vscode-editorWarning-foreground, #000000)", padding: "8px", textAlign: "center", position: "relative", fontSize: "12px", fontWeight: "bold", marginBottom: "8px", borderRadius: "4px"}}>
-            <span>Structure updated! Please restart the window (Developer: Reload Window) to apply changes.</span>
-            <button onClick={dismissDisclaimer} style={{position: "absolute", right: "4px", top: "4px", background: "transparent", border: "none", color: "inherit", cursor: "pointer", fontWeight: "bold", padding: "4px"}}>X</button>
+        <div className="disclaimer">
+          <span>Structure updated! Please restart the window (Developer: Reload Window) to apply changes.</span>
+          <button 
+            className="disclaimer-close" 
+            onClick={dismissDisclaimer}
+            title="Dismiss notification">
+            ×
+          </button>
         </div>
       )}
 
