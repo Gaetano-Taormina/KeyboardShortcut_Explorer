@@ -60,6 +60,10 @@ This extension contributes the following settings grouped by category:
 
 ## Release Notes
 
+### 1.2.0
+
+- feat: migrate from React to Preact and set up production build distribution for color picker theme editor
+
 ### 1.1.0
 
 - ci: trigger publish extension workflow on push to main
