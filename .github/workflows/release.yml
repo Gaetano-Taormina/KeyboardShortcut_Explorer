@@ -1,9 +1,12 @@
 name: Publish Extension
 
 on:
-  workflow_dispatch: # Permette il lancio manuale (Opzione 1)
+  push:
+    branches:
+      - main
+  workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 5' # Ogni venerdì a mezzanotte (UTC) (Opzione automatica)
+    - cron: '0 0 * * 5'
 
 permissions:
   contents: write # Necessario per creare commit, tag e Release su GitHub
