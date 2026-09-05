@@ -230,15 +230,12 @@
   },
   "activationEvents": [],
   "devDependencies": {
-    "@vitejs/plugin-react": "^6.1.1",
+    "@preact/preset-vite": "^2.10.6",
     "dotenv": "^17.4.2",
     "jimp": "^1.6.1",
     "oxlint": "^1.80.0",
+    "preact": "^10.29.8",
     "sass": "^1.103.1",
     "vite": "^8.2.2"
-  },
-  "dependencies": {
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
   }
 }
