@@ -1,6 +1,38 @@
 import { useState } from 'react';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 
+export function formatCommandLabel(rawCommand) {
+  if (!rawCommand) return '';
+  if (rawCommand.includes(' ') && !rawCommand.includes('.')) {
+    return rawCommand;
+  }
+
+  // Strip technical namespace prefixes (e.g. extension., workbench.action., editor.action., quokka.)
+  let clean = rawCommand
+    .replace(/^extension\./i, '')
+    .replace(/^(workbench|editor)\.action\./i, '')
+    .replace(/^[a-zA-Z0-9_-]+\.(action\.)?/i, '');
+
+  if (!clean) {
+    const parts = rawCommand.split('.');
+    clean = parts[parts.length - 1] || rawCommand;
+  }
+
+  clean = clean.replace(/^[._]+/, '');
+
+  // Convert camelCase, PascalCase, snake_case or dot notation to readable title
+  const formatted = clean
+    .replace(/[-_.]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .trim();
+
+  return formatted
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 export function CategoryGroup({ category, shortcuts, isPinned, onTogglePin, searchQuery, allCategories, onDragEnd }) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -16,7 +48,8 @@ export function CategoryGroup({ category, shortcuts, isPinned, onTogglePin, sear
   const filteredShortcuts = shortcuts.filter(sc => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    return sc.command.toLowerCase().includes(q) || sc.keys.toLowerCase().includes(q);
+    const formatted = formatCommandLabel(sc.command).toLowerCase();
+    return sc.command.toLowerCase().includes(q) || formatted.includes(q) || sc.keys.toLowerCase().includes(q);
   });
 
   if (filteredShortcuts.length === 0 && searchQuery) return null;
@@ -49,12 +82,20 @@ export function CategoryGroup({ category, shortcuts, isPinned, onTogglePin, sear
         </div>
       </summary>
       
-      {filteredShortcuts.map((sc, i) => (
-        <div className="shortcut-item" key={i}>
-          <span className="shortcut-keys">{sc.keys}</span>
-          <span className="shortcut-command">{sc.command}</span>
-        </div>
-      ))}
+      {filteredShortcuts.map((sc, i) => {
+        const keyParts = sc.keys ? sc.keys.trim().split(/\s+/) : [];
+        const label = formatCommandLabel(sc.command);
+        return (
+          <div className="shortcut-item" key={i}>
+            <span className="shortcut-command" title={`${label} (${sc.command})`}>{label}</span>
+            <div className="shortcut-keys-wrapper" title={sc.keys}>
+              {keyParts.map((part, pIdx) => (
+                <span className="shortcut-keys" key={pIdx}>{part}</span>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </details>
   );
 }

@@ -201,17 +201,13 @@ body.theme-force-hc .disclaimer,
 body.dyslexia-mode {
     font-family: var(--setting-dyslexia-font, 'Comic Sans MS', 'OpenDyslexic', 'Trebuchet MS', sans-serif) !important;
     letter-spacing: var(--setting-dyslexia-spacing, 0.08em) !important;
-    line-height: 2 !important;
+    line-height: 1.6 !important;
 }
 body.dyslexia-bold {
     font-weight: bold !important;
 }
 body.dyslexia-bold .shortcut-keys {
-    font-weight: 900 !important;
-}
-body.dyslexia-mode .shortcut-keys {
-    font-size: calc(var(--setting-keys-font-size, 14px) + 2px) !important;
-    border: 2px solid var(--vscode-focusBorder) !important;
+    font-weight: 700 !important;
 }
 
 .search-container {
@@ -496,8 +492,18 @@ summary.category:hover .reorder-controls {
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 4px 6px;
-    border-bottom: 1px solid var(--vscode-tree-indentGuidesStroke, rgba(120, 120, 120, 0.2));
+    justify-content: space-between;
+    gap: 10px;
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--vscode-tree-indentGuidesStroke, rgba(120, 120, 120, 0.15));
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 28px;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+        background-color: var(--vscode-list-hoverBackground, rgba(120, 120, 120, 0.08));
+    }
 }
 body.use-zebra-stripes .shortcut-item:nth-child(even) {
     background-color: var(--setting-alternate-row-color, rgba(130, 130, 130, 0.15));
@@ -505,32 +511,50 @@ body.use-zebra-stripes .shortcut-item:nth-child(even) {
 .shortcut-item:last-child {
     border-bottom: none;
 }
-.shortcut-keys {
-    font-family: var(--vscode-editor-font-family, 'Courier New', Courier, monospace) !important;
-    font-size: var(--setting-keys-font-size, 11px) !important;
-    color: var(--setting-keys-color, var(--vscode-textPreformat-foreground));
-    background-color: var(--setting-keys-bg, var(--vscode-textCodeBlock-background));
-    padding: 2px 6px;
-    border-radius: 4px;
-    display: inline-block;
-    flex-shrink: 0;
-    text-align: center;
-    font-weight: bold !important;
-    letter-spacing: normal !important;
-    border: 1px solid var(--vscode-widget-border, transparent);
-}
 .shortcut-command {
-    font-size: var(--setting-font-size, 13px);
+    font-family: var(--setting-font-family, var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif));
+    font-size: var(--setting-font-size, 12px);
     font-weight: 500;
-    margin-left: 16px;
-    flex-grow: 1;
+    color: var(--setting-text-color, var(--vscode-foreground));
+    flex: 1 1 auto;
     line-height: 1.4;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
+    letter-spacing: 0.01em;
     -webkit-user-select: text;
     user-select: text;
+}
+.shortcut-keys-wrapper {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+    flex-shrink: 0;
+    max-width: 50%;
+    min-width: 0;
+}
+.shortcut-keys {
+    font-family: var(--setting-font-family, var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif)) !important;
+    font-size: var(--setting-keys-font-size, 10px) !important;
+    color: var(--setting-keys-color, var(--vscode-textPreformat-foreground));
+    background-color: var(--setting-keys-bg, var(--vscode-textCodeBlock-background));
+    padding: 1.5px 5px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: 600 !important;
+    letter-spacing: normal !important;
+    line-height: 1.2;
+    border: 1px solid var(--vscode-widget-border, rgba(120, 120, 120, 0.25));
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    white-space: nowrap;
+    max-width: 100%;
 }
 .hidden {
     display: none !important;
@@ -627,6 +651,7 @@ body.use-zebra-stripes .shortcut-item:nth-child(even) {
     line-height: 1.2;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     word-break: break-word;
