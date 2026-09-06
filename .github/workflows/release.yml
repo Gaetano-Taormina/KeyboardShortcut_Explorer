@@ -56,7 +56,7 @@ jobs:
         
       - name: Create GitHub Release
         if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: "*.vsix"
           name: "Release v${{ steps.auto_release.outputs.NEW_VERSION }}"
