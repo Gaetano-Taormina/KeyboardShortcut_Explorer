@@ -60,6 +60,10 @@ This extension contributes the following settings grouped by category:
 
 ## Release Notes
 
+### 1.2.2
+
+- docs: update LICENSE header format [skip ci]
+
 ### 1.2.1
 
 - build: bump oxlint in the all-npm-dependencies group
