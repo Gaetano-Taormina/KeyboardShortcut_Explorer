@@ -22,6 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Full history required to extract commits from tags
+          ref: main
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -42,9 +43,9 @@ jobs:
       - name: Push new Commit and Tag
         if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
         run: |
-          git pull --rebase origin main
-          git push origin main
-          git push origin v${{ steps.auto_release.outputs.NEW_VERSION }}
+          git pull --rebase origin main || true
+          git push origin HEAD:main --follow-tags
+          git push origin "v${{ steps.auto_release.outputs.NEW_VERSION }}" || true
 
       - name: Build Extension
         if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
@@ -52,7 +53,7 @@ jobs:
 
       - name: Package Extension
         if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
-        run: npx vsce package
+        run: npx @vscode/vsce package --no-dependencies
         
       - name: Create GitHub Release
         if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
@@ -68,5 +69,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to VS Code Marketplace
-        run: npx vsce publish -p ${{ env.VSCE_PAT }}
+        run: npx @vscode/vsce publish -p ${{ env.VSCE_PAT }} --no-dependencies
         if: steps.auto_release.outputs.SHOULD_RELEASE == 'true' && env.VSCE_PAT != ''

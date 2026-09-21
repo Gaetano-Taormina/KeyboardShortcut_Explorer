@@ -42,6 +42,18 @@ function getNextVersion(currentVersion, commits) {
     return `${major}.${minor}.${patch + 1}`;
 }
 
+function semverCompare(v1, v2) {
+    const p1 = (v1 || '0.0.0').replace(/^v/, '').split('.').map(Number);
+    const p2 = (v2 || '0.0.0').replace(/^v/, '').split('.').map(Number);
+    for (let i = 0; i < 3; i++) {
+        const num1 = p1[i] || 0;
+        const num2 = p2[i] || 0;
+        if (num1 > num2) return 1;
+        if (num1 < num2) return -1;
+    }
+    return 0;
+}
+
 function run() {
     console.log('Starting Auto-Release Check...');
     const latestTag = getLatestTag();
@@ -62,46 +74,63 @@ function run() {
 
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
     const currentVersion = packageJson.version;
-    const nextVersion = getNextVersion(currentVersion, commits);
     
-    console.log(`Bumping version: ${currentVersion} -> ${nextVersion}`);
+    // If package.json has already been bumped manually ahead of latest tag, use it directly
+    let nextVersion;
+    if (latestTag && semverCompare(currentVersion, latestTag) > 0) {
+        nextVersion = currentVersion;
+        console.log(`Version already manually bumped in package.json to ${nextVersion}`);
+    } else {
+        nextVersion = getNextVersion(currentVersion, commits);
+        console.log(`Bumping version automatically: ${currentVersion} -> ${nextVersion}`);
+        packageJson.version = nextVersion;
+        fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+    }
 
-    // Update package.json
-    packageJson.version = nextVersion;
-    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
-
-    // Update README.md
+    // Update README.md if release notes for this version do not already exist
     let readme = fs.readFileSync(readmePath, 'utf-8');
     const releaseNotesMarker = '## Release Notes\n';
     
-    let changelogMarkdown = `\n### ${nextVersion}\n\n`;
-    for (const commit of changelogCommits) {
-        // Simple formatting to make it readable
-        changelogMarkdown += `- ${commit}\n`;
-    }
+    if (!readme.includes(`### ${nextVersion}`)) {
+        let changelogMarkdown = `\n### ${nextVersion}\n\n`;
+        for (const commit of changelogCommits) {
+            changelogMarkdown += `- ${commit}\n`;
+        }
 
-    if (readme.includes(releaseNotesMarker)) {
-        readme = readme.replace(releaseNotesMarker, releaseNotesMarker + changelogMarkdown);
-        fs.writeFileSync(readmePath, readme);
-        console.log('README.md updated with new release notes.');
+        if (readme.includes(releaseNotesMarker)) {
+            readme = readme.replace(releaseNotesMarker, releaseNotesMarker + changelogMarkdown);
+            fs.writeFileSync(readmePath, readme);
+            console.log('README.md updated with new release notes.');
+        } else {
+            console.warn('Could not find "## Release Notes" in README.md. Skipping README update.');
+        }
     } else {
-        console.warn('Could not find "## Release Notes" in README.md. Skipping README update.');
+        console.log(`Release notes for v${nextVersion} already present in README.md.`);
     }
 
     // Git operations
     execCommand('git config --global user.name "github-actions[bot]"');
     execCommand('git config --global user.email "github-actions[bot]@users.noreply.github.com"');
-    execCommand(`git add ${packageJsonPath} ${readmePath}`);
-    execCommand(`git commit -m "chore: release v${nextVersion} [skip ci]"`);
-    execCommand(`git tag v${nextVersion}`);
     
-    // We export the new version to GITHUB_OUTPUT so the workflow can use it
+    const status = execCommand('git status --porcelain');
+    if (status.length > 0) {
+        execCommand(`git add ${packageJsonPath} ${readmePath}`);
+        execCommand(`git commit -m "chore: release v${nextVersion} [skip ci]"`);
+    }
+    
+    try {
+        execCommand(`git tag -a v${nextVersion} -m "Release v${nextVersion}"`);
+    } catch (e) {
+        console.log(`Tag v${nextVersion} already exists or could not be created: ${e.message}`);
+    }
+    
+    // Export outputs for GitHub Actions
     if (process.env.GITHUB_OUTPUT) {
         fs.appendFileSync(process.env.GITHUB_OUTPUT, `NEW_VERSION=${nextVersion}\n`);
         fs.appendFileSync(process.env.GITHUB_OUTPUT, `SHOULD_RELEASE=true\n`);
     }
 
-    console.log(`Successfully bumped to v${nextVersion}`);
+    console.log(`Successfully prepared release for v${nextVersion}`);
 }
 
 run();
