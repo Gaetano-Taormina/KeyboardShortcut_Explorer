@@ -76,6 +76,7 @@ class ShortcutsDataService {
             ]
         };
 
+        // 1. Read User Custom Keybindings
         try {
             const appData = process.env.APPDATA || (process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support') : path.join(os.homedir(), '.config'));
             const keybindingsPath = path.join(appData, 'Code', 'User', 'keybindings.json');
@@ -84,9 +85,9 @@ class ShortcutsDataService {
                 let rawData = fs.readFileSync(keybindingsPath, 'utf8');
                 rawData = rawData.replace(/\/\*[\s\S]*?\*\/|([^\\:]|^)\/\/.*$/gm, '$1');
                 const customBindings = JSON.parse(rawData);
-                if (customBindings && customBindings.length > 0) {
+                if (Array.isArray(customBindings) && customBindings.length > 0) {
                     customBindings.forEach(binding => {
-                        if (!binding.command) return;
+                        if (!binding || !binding.command) return;
                         const cmd = binding.command;
                         const key = binding.key ? binding.key.toUpperCase() : 'UNKNOWN';
                         let category = "Custom User Shortcuts";
@@ -110,83 +111,58 @@ class ShortcutsDataService {
             console.error("Could not read user shortcuts", error);
         }
 
+        // 2. High-performance In-Memory Inspection via VS Code Extension API (Zero Disk I/O)
         this._availableExtensions = [];
-        try {
-            const extDir = path.join(os.homedir(), '.vscode', 'extensions');
-            if (fs.existsSync(extDir)) {
-                const extensionsFolders = fs.readdirSync(extDir);
-                for (const folder of extensionsFolders) {
-                    const packageJsonPath = path.join(extDir, folder, 'package.json');
-                    if (fs.existsSync(packageJsonPath)) {
-                        const packageData = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-                        if (packageData.contributes && packageData.contributes.keybindings) {
-                            let keybindingsList = packageData.contributes.keybindings;
-                            if (!Array.isArray(keybindingsList)) {
-                                keybindingsList = [keybindingsList];
-                            }
-                            const validShortcuts = keybindingsList
-                                .filter(kb => kb.key || kb.win || kb.mac)
-                                .map(kb => ({
-                                    command: kb.command,
-                                    keys: (kb.win || kb.key || kb.mac || '').toUpperCase()
-                                }));
-
-                            if (validShortcuts.length > 0) {
-                                const extensionName = packageData.displayName || packageData.name || folder;
-                                baseShortcuts[extensionName] = validShortcuts;
-                                if (!this._availableExtensions.includes(extensionName)) {
-                                    this._availableExtensions.push(extensionName);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (error) {
-            console.error("Error during extension search", error);
-        }
-
         this._builtInExtensions = [];
-        try {
-            const builtinExtDir = path.join(vscode.env.appRoot, 'extensions');
-            if (fs.existsSync(builtinExtDir)) {
-                const extensionsFolders = fs.readdirSync(builtinExtDir);
-                for (const folder of extensionsFolders) {
-                    const packageJsonPath = path.join(builtinExtDir, folder, 'package.json');
-                    if (fs.existsSync(packageJsonPath)) {
-                        const packageData = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-                        if (packageData.contributes && packageData.contributes.keybindings) {
-                            let keybindingsList = packageData.contributes.keybindings;
-                            if (!Array.isArray(keybindingsList)) {
-                                keybindingsList = [keybindingsList];
-                            }
-                            const validShortcuts = keybindingsList
-                                .filter(kb => kb.key || kb.win || kb.mac)
-                                .map(kb => ({
-                                    command: kb.command,
-                                    keys: (kb.win || kb.key || kb.mac || '').toUpperCase()
-                                }));
 
-                            if (validShortcuts.length > 0) {
-                                let extensionName = packageData.displayName || packageData.name || folder;
-                                extensionName = extensionName.replace(/^vscode-/i, '').replace(/-/g, ' ');
-                                extensionName = extensionName.charAt(0).toUpperCase() + extensionName.slice(1);
-                                baseShortcuts[extensionName] = validShortcuts;
-                                if (!this._availableExtensions.includes(extensionName)) {
-                                    this._availableExtensions.push(extensionName);
-                                }
-                                if (!this._builtInExtensions.includes(extensionName)) {
-                                    this._builtInExtensions.push(extensionName);
-                                }
+        try {
+            const allExtensions = vscode.extensions.all;
+            if (Array.isArray(allExtensions)) {
+                for (const ext of allExtensions) {
+                    const pkg = ext.packageJSON;
+                    if (!pkg || !pkg.contributes || !pkg.contributes.keybindings) continue;
+
+                    let keybindingsList = pkg.contributes.keybindings;
+                    if (!Array.isArray(keybindingsList)) {
+                        keybindingsList = [keybindingsList];
+                    }
+
+                    const validShortcuts = keybindingsList
+                        .filter(kb => kb && (kb.key || kb.win || kb.mac || kb.linux))
+                        .map(kb => ({
+                            command: kb.command,
+                            keys: (kb.win || kb.key || kb.mac || kb.linux || '').toUpperCase()
+                        }))
+                        .filter(s => s.command && s.keys);
+
+                    if (validShortcuts.length > 0) {
+                        const isBuiltin = pkg.isBuiltin || ext.id.startsWith('vscode.');
+                        let extensionName = pkg.displayName || pkg.name || ext.id;
+
+                        if (isBuiltin) {
+                            extensionName = extensionName.replace(/^vscode-/i, '').replace(/-/g, ' ');
+                            extensionName = extensionName.charAt(0).toUpperCase() + extensionName.slice(1);
+                            if (!this._builtInExtensions.includes(extensionName)) {
+                                this._builtInExtensions.push(extensionName);
                             }
+                        }
+
+                        if (!baseShortcuts[extensionName]) {
+                            baseShortcuts[extensionName] = [];
+                        }
+                        baseShortcuts[extensionName].push(...validShortcuts);
+
+                        if (!this._availableExtensions.includes(extensionName)) {
+                            this._availableExtensions.push(extensionName);
                         }
                     }
                 }
             }
         } catch (error) {
-            console.error("Error during integrated extensions search", error);
+            console.error("Error inspecting vscode in-memory extensions", error);
         }
 
+        // 3. Deduplicate shortcuts per category
         for (const category in baseShortcuts) {
             const uniqueShortcuts = [];
             const seen = new Set();
@@ -200,6 +176,7 @@ class ShortcutsDataService {
             baseShortcuts[category] = uniqueShortcuts;
         }
 
+        // 4. Register base categories into available and builtIn sets
         const hardcodedCategories = ["Basic Editing", "Line Operations", "Navigation", "Terminal", "File Management", "Window Management", "View", "Debug"];
         for (const category in baseShortcuts) {
             if (!this._availableExtensions.includes(category)) {

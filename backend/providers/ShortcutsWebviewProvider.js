@@ -9,6 +9,14 @@ class ShortcutsWebviewProvider {
         this._globalState = globalState;
         this._view = null;
         this._dataService = new ShortcutsDataService();
+        this._version = "1.0.0";
+        try {
+            const packageJsonPath = path.join(this._extensionUri.fsPath, 'package.json');
+            const packageJsonData = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+            this._version = packageJsonData.version || "1.0.0";
+        } catch (e) {
+            console.error("Could not load package.json version", e);
+        }
     }
 
     resolveWebviewView(webviewView) {
@@ -22,6 +30,9 @@ class ShortcutsWebviewProvider {
             ]
         };
 
+        // Render HTML once on initialization
+        webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+
         this.updateWebview();
 
         this._view.webview.onDidReceiveMessage(
@@ -29,6 +40,7 @@ class ShortcutsWebviewProvider {
                 switch (message.command) {
                     case 'requestInitData':
                         if (this._lastDataPayload) this.postMessage(this._lastDataPayload);
+                        else this.updateWebview();
                         break;
                     case 'updateHiddenExtensions':
                         await this._globalState.update('hiddenExtensions', message.hiddenList);
@@ -45,7 +57,7 @@ class ShortcutsWebviewProvider {
                     case 'updateCategoryOrder':
                         await this._globalState.update('categoryOrder', message.orderList);
                         break;
-                    case 'updateSetting':
+                    case 'updateSetting': {
                         const configColors = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
                         if (message.key === 'appearanceMode') {
                             await configColors.update(message.key, message.value === 'Native' ? undefined : message.value, vscode.ConfigurationTarget.Global);
@@ -58,6 +70,7 @@ class ShortcutsWebviewProvider {
                             }
                         }
                         break;
+                    }
                 }
             }
         );
@@ -114,16 +127,8 @@ class ShortcutsWebviewProvider {
         const pinnedCategories = this._globalState.get('pinnedCategories') || [];
         const categoryOrder = this._globalState.get('categoryOrder') || [];
 
-        let currentVersion = "1.0.7";
-        try {
-            const packageJsonPath = path.join(this._extensionUri.fsPath, 'package.json');
-            const packageJsonData = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-            currentVersion = packageJsonData.version;
-        } catch (e) {
-            console.error(e);
-        }
         const lastVersion = this._globalState.get('lastVersion');
-        const showDisclaimer = lastVersion !== currentVersion;
+        const showDisclaimer = lastVersion !== this._version;
         const hasSeenGridTutorial = this._globalState.get('hasSeenGridTutorial') || false;
 
         this._lastDataPayload = {
@@ -137,19 +142,22 @@ class ShortcutsWebviewProvider {
             categoryOrder: categoryOrder,
             showDisclaimer: showDisclaimer,
             showGridTutorial: !hasSeenGridTutorial,
-            version: currentVersion
+            version: this._version
         };
         
+        // Post IPC message directly without destroying webview DOM
         this.postMessage(this._lastDataPayload);
+    }
 
-        const scriptUri = this._view.webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'assets', 'main.js'));
-        const styleUri = this._view.webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'assets', 'main.css'));
+    _getHtmlForWebview(webview) {
+        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'assets', 'main.js'));
+        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'dist', 'assets', 'main.css'));
 
-        const htmlContent = `<!DOCTYPE html>
+        return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${this._view.webview.cspSource} 'unsafe-inline'; script-src ${this._view.webview.cspSource} 'unsafe-inline'; font-src ${this._view.webview.cspSource};">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource};">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Keyboard Shortcut Explorer</title>
     <link rel="stylesheet" href="${styleUri}">
@@ -159,8 +167,6 @@ class ShortcutsWebviewProvider {
     <script type="module" src="${scriptUri}"></script>
 </body>
 </html>`;
-        
-        this._view.webview.html = htmlContent;
     }
 
     postMessage(message) {

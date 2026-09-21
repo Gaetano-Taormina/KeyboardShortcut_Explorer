@@ -83,35 +83,33 @@ class ColorPickerPanel {
                         }
                     } else if (message.command === 'saveSettings') {
                         const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
+                        const promises = [];
                         if (message.customThemes) {
-                            await config.update('customThemes', message.customThemes, vscode.ConfigurationTarget.Global);
+                            promises.push(config.update('customThemes', message.customThemes, vscode.ConfigurationTarget.Global));
                         }
                         if (message.settings) {
                             for (const [k, v] of Object.entries(message.settings)) {
                                 if (k === 'appearanceMode') {
-                                    await config.update(k, v === 'Native' ? undefined : v, vscode.ConfigurationTarget.Global);
+                                    promises.push(config.update(k, v === 'Native' ? undefined : v, vscode.ConfigurationTarget.Global));
                                 } else if (k === 'colorProfile') {
-                                    await config.update(k, v === 'VS Code Native' ? undefined : v, vscode.ConfigurationTarget.Global);
+                                    promises.push(config.update(k, v === 'VS Code Native' ? undefined : v, vscode.ConfigurationTarget.Global));
                                 } else {
-                                    await config.update(k, v, vscode.ConfigurationTarget.Global);
+                                    promises.push(config.update(k, v, vscode.ConfigurationTarget.Global));
                                 }
                             }
                         }
+                        await Promise.all(promises);
                         vscode.window.showInformationMessage('Keyboard Shortcuts: Color Theme saved successfully!');
                         sendSettingsToPicker();
                     } else if (message.command === 'resetDefaults') {
                         const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
-                        await config.update('appearanceMode', undefined, vscode.ConfigurationTarget.Global);
-                        await config.update('colorProfile', undefined, vscode.ConfigurationTarget.Global);
-                        await config.update('customThemes', undefined, vscode.ConfigurationTarget.Global);
                         const keysToClean = [
+                            'appearanceMode', 'colorProfile', 'customThemes',
                             'textColor', 'titleBackgroundColor', 'keysBackgroundColor', 
                             'bubbleColor', 'searchbarBackgroundColor', 'searchbarTextColor', 
                             'alternateRowColor', 'scrollbarColor'
                         ];
-                        for (const k of keysToClean) {
-                            await config.update(k, undefined, vscode.ConfigurationTarget.Global);
-                        }
+                        await Promise.all(keysToClean.map(k => config.update(k, undefined, vscode.ConfigurationTarget.Global)));
                         sendSettingsToPicker();
                     }
                 },
