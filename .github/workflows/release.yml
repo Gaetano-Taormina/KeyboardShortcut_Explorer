@@ -2,17 +2,16 @@ name: Publish Extension
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
   workflow_dispatch:
-  schedule:
-    - cron: '0 0 * * 5'
 
 permissions:
-  contents: write # Required to create commits, tags and GitHub Releases
+  contents: write # Required to create GitHub Releases
 
 jobs:
   release:
+    name: Release & Publish
     runs-on: ubuntu-latest
     env:
       VSCE_PAT: ${{ secrets.VSCE_PAT }}
@@ -20,9 +19,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Full history required to extract commits from tags
-          ref: main
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -36,32 +32,21 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Run Auto-Release Script
-        id: auto_release
-        run: node scripts/auto-release.js
-
-      - name: Push new Commit and Tag
-        if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
-        run: |
-          git pull --rebase origin main || true
-          git push origin HEAD:main --follow-tags
-          git push origin "v${{ steps.auto_release.outputs.NEW_VERSION }}" || true
+      - name: Lint Code
+        run: pnpm run lint
 
       - name: Build Extension
-        if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
         run: pnpm run build
 
       - name: Package Extension
-        if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
         run: npx @vscode/vsce package --no-dependencies
         
       - name: Create GitHub Release
-        if: steps.auto_release.outputs.SHOULD_RELEASE == 'true'
         uses: softprops/action-gh-release@v2
         with:
           files: "*.vsix"
-          name: "Release v${{ steps.auto_release.outputs.NEW_VERSION }}"
-          tag_name: "v${{ steps.auto_release.outputs.NEW_VERSION }}"
+          name: "Release ${{ github.ref_name }}"
+          tag_name: "${{ github.ref_name }}"
           draft: false
           prerelease: false
           generate_release_notes: true
@@ -70,4 +55,4 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         run: npx @vscode/vsce publish -p ${{ env.VSCE_PAT }} --no-dependencies
-        if: steps.auto_release.outputs.SHOULD_RELEASE == 'true' && env.VSCE_PAT != ''
+        if: env.VSCE_PAT != ''
