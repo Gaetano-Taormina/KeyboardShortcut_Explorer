@@ -60,6 +60,15 @@ This extension contributes the following settings grouped by category:
 
 ## Release Notes
 
+### 1.3.2
+
+- perf: implement in-memory shortcut snapshot caching with automatic `vscode.extensions.onDidChange` invalidation (0ms latency)
+- perf: add React 18 `useDeferredValue` for non-blocking real-time search input rendering
+- perf: migrate styling from SCSS to modern native CSS with standard nesting and remove `sass` compiler dependency
+- arch: centralize typed IPC message protocol constants across backend and frontend
+- a11y: add ARIA accessibility attributes and roles for categories and reorder grid
+- refactor: extract reusable memoized SVG micro-icon components
+
 ### 1.3.1
 
 - ci(actions): use --no-frozen-lockfile to ensure resilient dependency installation
