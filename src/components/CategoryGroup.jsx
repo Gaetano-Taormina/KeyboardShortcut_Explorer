@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
+
+const labelCache = new Map();
 
 export function formatCommandLabel(rawCommand) {
   if (!rawCommand) return '';
+  if (labelCache.has(rawCommand)) {
+    return labelCache.get(rawCommand);
+  }
   if (rawCommand.includes(' ') && !rawCommand.includes('.')) {
+    labelCache.set(rawCommand, rawCommand);
     return rawCommand;
   }
 
@@ -25,15 +31,24 @@ export function formatCommandLabel(rawCommand) {
     .replace(/[-_.]+/g, ' ')
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-    .trim();
-
-  return formatted
+    .trim()
     .split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+
+  labelCache.set(rawCommand, formatted);
+  return formatted;
 }
 
-export function CategoryGroup({ category, shortcuts, isPinned, onTogglePin, searchQuery, allCategories, onDragEnd }) {
+export const CategoryGroup = memo(function CategoryGroup({ 
+  category, 
+  shortcuts = [], 
+  isPinned, 
+  onTogglePin, 
+  searchQuery, 
+  allCategories, 
+  onDragEnd 
+}) {
   const [isOpen, setIsOpen] = useState(true);
 
   const {
@@ -45,12 +60,18 @@ export function CategoryGroup({ category, shortcuts, isPinned, onTogglePin, sear
     handleDrop
   } = useDragAndDrop(category, isPinned, allCategories, onDragEnd);
 
-  const filteredShortcuts = shortcuts.filter(sc => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    const formatted = formatCommandLabel(sc.command).toLowerCase();
-    return sc.command.toLowerCase().includes(q) || formatted.includes(q) || sc.keys.toLowerCase().includes(q);
-  });
+  const filteredShortcuts = useMemo(() => {
+    if (!searchQuery) return shortcuts;
+    const q = searchQuery.toLowerCase().trim();
+    return shortcuts.filter(sc => {
+      const formatted = formatCommandLabel(sc.command).toLowerCase();
+      return (
+        sc.command.toLowerCase().includes(q) ||
+        formatted.includes(q) ||
+        (sc.keys && sc.keys.toLowerCase().includes(q))
+      );
+    });
+  }, [shortcuts, searchQuery]);
 
   if (filteredShortcuts.length === 0 && searchQuery) return null;
 
@@ -72,7 +93,11 @@ export function CategoryGroup({ category, shortcuts, isPinned, onTogglePin, sear
       >
         <span className="category-title-text">{category}</span>
         <div className={`reorder-controls ${isPinned ? 'always-visible' : ''}`}>
-          <button className={`reorder-btn ${isPinned ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); onTogglePin(); }} title="Pin to top">
+          <button 
+            className={`reorder-btn ${isPinned ? 'active' : ''}`} 
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onTogglePin(); }} 
+            title="Pin to top"
+          >
             {isPinned ? (
               <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11 6.31V7H2v-.69L4.12 4.19V1h4.76v3.19L11 6.31zM6 14.5v-6.62h1v6.62l-.5.5-.5-.5z"/></svg>
             ) : (
@@ -86,7 +111,7 @@ export function CategoryGroup({ category, shortcuts, isPinned, onTogglePin, sear
         const keyParts = sc.keys ? sc.keys.trim().split(/\s+/) : [];
         const label = formatCommandLabel(sc.command);
         return (
-          <div className="shortcut-item" key={i}>
+          <div className="shortcut-item" key={sc.command || i}>
             <span className="shortcut-command" title={`${label} (${sc.command})`}>{label}</span>
             <div className="shortcut-keys-wrapper" title={sc.keys}>
               {keyParts.map((part, pIdx) => (
@@ -98,4 +123,4 @@ export function CategoryGroup({ category, shortcuts, isPinned, onTogglePin, sear
       })}
     </details>
   );
-}
+});

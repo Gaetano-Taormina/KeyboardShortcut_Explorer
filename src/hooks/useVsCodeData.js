@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getPresetPalette, getModeSlotKey } from '../constants/themePresets';
 
 const vscode = window.acquireVsCodeApi ? window.acquireVsCodeApi() : { postMessage: () => {} };
@@ -162,7 +162,7 @@ export function useVsCodeData() {
     vscode.postMessage({ command: 'dismissGridTutorial' });
   };
 
-  const getOrderedCategories = () => {
+  const orderedCats = useMemo(() => {
     const allCategories = Object.keys(shortcutsData);
     const visibleCategories = allCategories.filter(cat => !hiddenExtensions.includes(cat));
     
@@ -177,7 +177,7 @@ export function useVsCodeData() {
         if (posB === -1) posB = 999;
         return posA - posB;
     });
-  };
+  }, [shortcutsData, hiddenExtensions, pinnedCategories, categoryOrder]);
 
   return {
     shortcutsData,
@@ -189,7 +189,7 @@ export function useVsCodeData() {
     dismissDisclaimer,
     dismissGridTutorial,
     showGridTutorial,
-    orderedCats: getOrderedCategories(),
+    orderedCats,
     isSearchVisible,
     isCustomMenuVisible,
     isReorderMode,
