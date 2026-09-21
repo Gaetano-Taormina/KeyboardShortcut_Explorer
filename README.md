@@ -60,6 +60,15 @@ This extension contributes the following settings grouped by category:
 
 ## Release Notes
 
+### 1.3.0
+
+- perf: replace blocking synchronous disk I/O with in-memory VS Code Extension API for instant shortcut detection
+- perf: optimize webview lifecycle with persistent HTML rendering and reactive IPC state propagation
+- perf: introduce label formatting cache and memoized category components for real-time 60 FPS search
+- chore(deps): perform zero-bloat cleanup by removing unused dependencies and locking deterministic pnpm packageManager
+- ci: integrate pnpm store cache in CI and Release GitHub Actions workflows
+- security: harden Content Security Policy (CSP) headers, remove plaintext token storage, and ensure zero-trust compliance
+
 ### 1.2.2
 
 - docs: update LICENSE header format [skip ci]
