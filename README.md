@@ -60,6 +60,15 @@ This extension contributes the following settings grouped by category:
 
 ## Release Notes
 
+### 1.3.1
+
+- ci(actions): use --no-frozen-lockfile to ensure resilient dependency installation
+- ci(actions): align pnpm-setup order before setup-node and add codeql build-mode
+- docs: add release notes for v1.3.0 in readme
+- ci(github): add pnpm store caching and standardize workflow actions
+- perf(frontend): memoize command labels and optimize category render cycles
+- perf(backend): replace synchronous fs scanning with in-memory vscode api and optimize webview lifecycle
+
 ### 1.3.0
 
 - perf: replace blocking synchronous disk I/O with in-memory VS Code Extension API for instant shortcut detection
