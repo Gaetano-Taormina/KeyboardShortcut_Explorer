@@ -22,4 +22,7 @@ index.html
 colorpicker.html
 *.vsix
 **/*.map
-crop_logo.py
+crop_logo.py
+.agents/**
+BOTTLENECKS.md
+
