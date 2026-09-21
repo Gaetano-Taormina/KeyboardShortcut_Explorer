@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useDeferredValue } from 'react';
 import { useVsCodeData } from './hooks/useVsCodeData';
 import { CategoryGroup } from './components/CategoryGroup';
 import { ExtensionsMenu } from './components/ExtensionsMenu';
 import { ReorderGrid } from './components/ReorderGrid';
-import './App.scss';
+import './App.css';
 
 export default function App() {
   const {
@@ -26,16 +26,18 @@ export default function App() {
   } = useVsCodeData();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   return (
     <div className="app-container">
       {showDisclaimer && (
-        <div className="disclaimer">
+        <div className="disclaimer" role="alert">
           <span>Structure updated! Please restart the window (Developer: Reload Window) to apply changes.</span>
           <button 
             className="disclaimer-close" 
             onClick={dismissDisclaimer}
-            title="Dismiss notification">
+            title="Dismiss notification"
+            aria-label="Dismiss notification">
             ×
           </button>
         </div>
@@ -58,6 +60,7 @@ export default function App() {
               placeholder="Search (e.g. Save, Ctrl+S)..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
+              aria-label="Search keyboard shortcuts"
             />
           </div>
         </div>
@@ -73,20 +76,20 @@ export default function App() {
           dismissGridTutorial={dismissGridTutorial}
         />
       ) : (
-        <div id="shortcuts-container" className="shortcuts-container">
+        <div id="shortcuts-container" className="shortcuts-container" role="list">
           {orderedCats.map(cat => (
             <CategoryGroup 
               key={cat}
               category={cat}
               shortcuts={shortcutsData[cat]}
               isPinned={pinnedCategories.includes(cat)}
-              onTogglePin={() => togglePin(cat)}
-              searchQuery={searchQuery}
+              onTogglePin={togglePin}
+              searchQuery={deferredSearchQuery}
               allCategories={orderedCats}
               onDragEnd={handleDragEnd}
             />
           ))}
-          {orderedCats.length === 0 && <div id="no-results">No categories to display.</div>}
+          {orderedCats.length === 0 && <div id="no-results" role="status">No categories to display.</div>}
         </div>
       )}
     </div>

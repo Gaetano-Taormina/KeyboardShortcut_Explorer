@@ -5,7 +5,8 @@ import {
   getModeSlotKey,
   normalizeProfileName
 } from '../../constants/themePresets';
-import './ColorPicker.scss';
+import { IPC_COMMANDS } from '../../constants/ipcCommands';
+import './ColorPicker.css';
 
 const vscode = window.acquireVsCodeApi ? window.acquireVsCodeApi() : { postMessage: () => {} };
 
@@ -40,7 +41,7 @@ export default function ColorPicker() {
     // Listen for incoming messages from VS Code
     const handleMessage = (event) => {
       const message = event.data;
-      if (message.command === 'loadSettings') {
+      if (message.command === IPC_COMMANDS.LOAD_SETTINGS) {
         const appMode = message.settings.appearanceMode || 'Native';
         const colProf = message.settings.colorProfile || 'VS Code Native';
         const initialDefaults = getInitialCustomThemes();
@@ -78,14 +79,14 @@ export default function ColorPicker() {
     };
 
     window.addEventListener('message', handleMessage);
-    vscode.postMessage({ command: 'requestSettings' });
+    vscode.postMessage({ command: IPC_COMMANDS.REQUEST_SETTINGS });
 
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   const updateSetting = (key, value) => {
     vscode.postMessage({
-      command: 'updateSetting',
+      command: IPC_COMMANDS.UPDATE_SETTING,
       key: key,
       value: value
     });
@@ -187,7 +188,7 @@ export default function ColorPicker() {
     setCustomThemes(updatedCustomThemes);
 
     vscode.postMessage({
-      command: 'saveSettings',
+      command: IPC_COMMANDS.SAVE_SETTINGS,
       customThemes: updatedCustomThemes,
       settings: {
         appearanceMode,
@@ -215,7 +216,7 @@ export default function ColorPicker() {
     const defaultPreset = getPresetPalette('Native', 'Default');
     applyPaletteToInputs(defaultPreset);
 
-    vscode.postMessage({ command: 'resetDefaults' });
+    vscode.postMessage({ command: IPC_COMMANDS.RESET_DEFAULTS });
   };
 
   const isNativeAppearance = appearanceMode === 'Native';

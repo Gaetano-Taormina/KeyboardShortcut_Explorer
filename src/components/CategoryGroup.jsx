@@ -1,5 +1,6 @@
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo, memo, useCallback } from 'react';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
+import { PinIcon } from './common/Icons';
 
 const labelCache = new Map();
 
@@ -60,6 +61,14 @@ export const CategoryGroup = memo(function CategoryGroup({
     handleDrop
   } = useDragAndDrop(category, isPinned, allCategories, onDragEnd);
 
+  const handlePinClick = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof onTogglePin === 'function') {
+      onTogglePin(category);
+    }
+  }, [onTogglePin, category]);
+
   const filteredShortcuts = useMemo(() => {
     if (!searchQuery) return shortcuts;
     const q = searchQuery.toLowerCase().trim();
@@ -84,25 +93,24 @@ export const CategoryGroup = memo(function CategoryGroup({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      role="listitem"
     >
       <summary 
         className="category draggable" 
         draggable={!isPinned} 
         onDragStart={handleDragStart} 
         onDragEnd={handleDragEndEvent}
+        aria-label={`${category} category`}
       >
         <span className="category-title-text">{category}</span>
         <div className={`reorder-controls ${isPinned ? 'always-visible' : ''}`}>
           <button 
             className={`reorder-btn ${isPinned ? 'active' : ''}`} 
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onTogglePin(); }} 
-            title="Pin to top"
+            onClick={handlePinClick} 
+            title={isPinned ? "Unpin category" : "Pin category to top"}
+            aria-label={isPinned ? `Unpin ${category}` : `Pin ${category} to top`}
           >
-            {isPinned ? (
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11 6.31V7H2v-.69L4.12 4.19V1h4.76v3.19L11 6.31zM6 14.5v-6.62h1v6.62l-.5.5-.5-.5z"/></svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.16 6.31l-.22-.3-2.61-2.6L8 3.19V1L7.5.5h-2L5 1v2.19l-.31.22-2.6 2.6-.21.31v1.64h3.62v6.62L6 15h1l.5-.5.5.5h1l.5-.5v-6.62h3.66V6.31zm-1 .69H3V6l2.12-2.12V1h2.76v2.88L10.16 6v1z"/></svg>
-            )}
+            <PinIcon active={isPinned} size={14} />
           </button>
         </div>
       </summary>
@@ -113,7 +121,7 @@ export const CategoryGroup = memo(function CategoryGroup({
         return (
           <div className="shortcut-item" key={sc.command || i}>
             <span className="shortcut-command" title={`${label} (${sc.command})`}>{label}</span>
-            <div className="shortcut-keys-wrapper" title={sc.keys}>
+            <div className="shortcut-keys-wrapper" title={sc.keys} aria-label={`Shortcut: ${sc.keys}`}>
               {keyParts.map((part, pIdx) => (
                 <span className="shortcut-keys" key={pIdx}>{part}</span>
               ))}
