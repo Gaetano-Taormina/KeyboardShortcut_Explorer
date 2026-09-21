@@ -9,7 +9,7 @@ on:
     - cron: '0 0 * * 5'
 
 permissions:
-  contents: write # Necessario per creare commit, tag e Release su GitHub
+  contents: write # Required to create commits, tags and GitHub Releases
 
 jobs:
   release:
@@ -21,7 +21,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Recupera tutto lo storico (necessario per estrarre i commit dai tag)
+          fetch-depth: 0 # Full history required to extract commits from tags
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -32,6 +32,21 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 9
+          run_install: false
+
+      - name: Get pnpm Store Directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
