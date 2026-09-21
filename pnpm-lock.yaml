@@ -11,12 +11,6 @@ importers:
       '@preact/preset-vite':
         specifier: ^2.10.6
         version: 2.10.6(@babel/core@7.29.7)(preact@10.29.8)(vite@8.2.2(sass@1.103.1))
-      dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
-      jimp:
-        specifier: ^1.6.1
-        version: 1.6.1
       oxlint:
         specifier: ^1.81.0
         version: 1.81.0
