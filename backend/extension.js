@@ -1,6 +1,7 @@
 const vscode = require('vscode');
 const ShortcutsWebviewProvider = require('./providers/ShortcutsWebviewProvider');
 const ColorPickerPanel = require('./panels/ColorPickerPanel');
+const { IPC_COMMANDS } = require('./constants/ipcCommands');
 
 let providerInstance = null;
 
@@ -8,9 +9,9 @@ function activate(context) {
     // Migrate & recover old setting appearance.appearanceMode to colors.appearanceMode without data loss
     const oldAppearanceConfig = vscode.workspace.getConfiguration('keyboardshortcut-explorer.appearance');
     const newColorsConfig = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
-    const oldVal = oldAppearanceConfig.inspect('appearanceMode').globalValue;
+    const oldVal = oldAppearanceConfig.inspect('appearanceMode')?.globalValue;
     if (oldVal !== undefined) {
-        if (newColorsConfig.inspect('appearanceMode').globalValue === undefined) {
+        if (newColorsConfig.inspect('appearanceMode')?.globalValue === undefined) {
             newColorsConfig.update('appearanceMode', oldVal, vscode.ConfigurationTarget.Global);
         }
         oldAppearanceConfig.update('appearanceMode', undefined, vscode.ConfigurationTarget.Global);
@@ -20,6 +21,16 @@ function activate(context) {
     providerInstance = new ShortcutsWebviewProvider(context.extensionUri, context.globalState);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider('keyboardShortcutsView', providerInstance)
+    );
+
+    // Invalidate cached shortcuts on extension install/uninstall
+    context.subscriptions.push(
+        vscode.extensions.onDidChange(() => {
+            if (providerInstance && providerInstance.dataService) {
+                providerInstance.dataService.invalidateCache();
+                providerInstance.updateWebview();
+            }
+        })
     );
 
     // Register Commands
@@ -32,15 +43,15 @@ function activate(context) {
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('keyboardshortcut-explorer.toggleSearch', () => {
-        if (providerInstance) providerInstance.postMessage({ command: 'toggleSearch' });
+        if (providerInstance) providerInstance.postMessage({ command: IPC_COMMANDS.TOGGLE_SEARCH });
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('keyboardshortcut-explorer.toggleExtensions', () => {
-        if (providerInstance) providerInstance.postMessage({ command: 'toggleCustomMenu' });
+        if (providerInstance) providerInstance.postMessage({ command: IPC_COMMANDS.TOGGLE_CUSTOM_MENU });
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('keyboardshortcut-explorer.toggleReorderMode', () => {
-        if (providerInstance) providerInstance.postMessage({ command: 'toggleReorderMode' });
+        if (providerInstance) providerInstance.postMessage({ command: IPC_COMMANDS.TOGGLE_REORDER_MODE });
     }));
 
     // Register Color Picker Panel

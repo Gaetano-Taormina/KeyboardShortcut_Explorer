@@ -1,4 +1,5 @@
 const vscode = require('vscode');
+const { IPC_COMMANDS } = require('../constants/ipcCommands');
 
 class ColorPickerPanel {
     static register(context) {
@@ -53,7 +54,7 @@ class ColorPickerPanel {
                     searchbarTextColor: configColors.get('searchbarTextColor') || '#cccccc',
                     alternateRowColor: configColors.get('alternateRowColor') || '#82828233'
                 };
-                colorPickerPanel.webview.postMessage({ command: 'loadSettings', settings });
+                colorPickerPanel.webview.postMessage({ command: IPC_COMMANDS.LOAD_SETTINGS, settings });
             };
 
             configListener = vscode.workspace.onDidChangeConfiguration(e => {
@@ -64,9 +65,9 @@ class ColorPickerPanel {
 
             colorPickerPanel.webview.onDidReceiveMessage(
                 async message => {
-                    if (message.command === 'requestSettings') {
+                    if (message.command === IPC_COMMANDS.REQUEST_SETTINGS) {
                         sendSettingsToPicker();
-                    } else if (message.command === 'updateSetting') {
+                    } else if (message.command === IPC_COMMANDS.UPDATE_SETTING) {
                         const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
                         
                         if (message.key === 'appearanceMode') {
@@ -81,7 +82,7 @@ class ColorPickerPanel {
                                 await config.update('colorProfile', 'Custom', vscode.ConfigurationTarget.Global);
                             }
                         }
-                    } else if (message.command === 'saveSettings') {
+                    } else if (message.command === IPC_COMMANDS.SAVE_SETTINGS) {
                         const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
                         const promises = [];
                         if (message.customThemes) {
@@ -99,29 +100,22 @@ class ColorPickerPanel {
                             }
                         }
                         await Promise.all(promises);
-                        vscode.window.showInformationMessage('Keyboard Shortcuts: Color Theme saved successfully!');
-                        sendSettingsToPicker();
-                    } else if (message.command === 'resetDefaults') {
+                    } else if (message.command === IPC_COMMANDS.RESET_DEFAULTS) {
                         const config = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
-                        const keysToClean = [
-                            'appearanceMode', 'colorProfile', 'customThemes',
-                            'textColor', 'titleBackgroundColor', 'keysBackgroundColor', 
-                            'bubbleColor', 'searchbarBackgroundColor', 'searchbarTextColor', 
-                            'alternateRowColor', 'scrollbarColor'
-                        ];
-                        await Promise.all(keysToClean.map(k => config.update(k, undefined, vscode.ConfigurationTarget.Global)));
-                        sendSettingsToPicker();
+                        await Promise.all([
+                            config.update('appearanceMode', undefined, vscode.ConfigurationTarget.Global),
+                            config.update('colorProfile', undefined, vscode.ConfigurationTarget.Global),
+                            config.update('customThemes', undefined, vscode.ConfigurationTarget.Global)
+                        ]);
                     }
-                },
-                undefined,
-                context.subscriptions
+                }
             );
         }));
     }
 
     static getHtml(extensionUri, webview) {
-        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist', 'assets', 'colorPicker.js'));
-        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist', 'assets', 'colorPicker.css'));
+        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist', 'assets', 'colorpicker.js'));
+        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist', 'assets', 'colorpicker.css'));
 
         return `<!DOCTYPE html>
 <html lang="en">

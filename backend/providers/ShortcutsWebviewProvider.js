@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
 const ShortcutsDataService = require('../services/ShortcutsDataService');
+const { IPC_COMMANDS } = require('../constants/ipcCommands');
 
 class ShortcutsWebviewProvider {
     constructor(extensionUri, globalState) {
@@ -17,6 +18,10 @@ class ShortcutsWebviewProvider {
         } catch (e) {
             console.error("Could not load package.json version", e);
         }
+    }
+
+    get dataService() {
+        return this._dataService;
     }
 
     resolveWebviewView(webviewView) {
@@ -38,26 +43,26 @@ class ShortcutsWebviewProvider {
         this._view.webview.onDidReceiveMessage(
             async message => {
                 switch (message.command) {
-                    case 'requestInitData':
+                    case IPC_COMMANDS.REQUEST_INIT_DATA:
                         if (this._lastDataPayload) this.postMessage(this._lastDataPayload);
                         else this.updateWebview();
                         break;
-                    case 'updateHiddenExtensions':
+                    case IPC_COMMANDS.UPDATE_HIDDEN_EXTENSIONS:
                         await this._globalState.update('hiddenExtensions', message.hiddenList);
                         break;
-                    case 'updatePinnedCategories':
+                    case IPC_COMMANDS.UPDATE_PINNED_CATEGORIES:
                         await this._globalState.update('pinnedCategories', message.pinnedList);
                         break;
-                    case 'dismissDisclaimer':
+                    case IPC_COMMANDS.DISMISS_DISCLAIMER:
                         await this._globalState.update('lastVersion', message.version);
                         break;
-                    case 'dismissGridTutorial':
+                    case IPC_COMMANDS.DISMISS_GRID_TUTORIAL:
                         await this._globalState.update('hasSeenGridTutorial', true);
                         break;
-                    case 'updateCategoryOrder':
+                    case IPC_COMMANDS.UPDATE_CATEGORY_ORDER:
                         await this._globalState.update('categoryOrder', message.orderList);
                         break;
-                    case 'updateSetting': {
+                    case IPC_COMMANDS.UPDATE_SETTING: {
                         const configColors = vscode.workspace.getConfiguration('keyboardshortcut-explorer.colors');
                         if (message.key === 'appearanceMode') {
                             await configColors.update(message.key, message.value === 'Native' ? undefined : message.value, vscode.ConfigurationTarget.Global);
@@ -132,7 +137,7 @@ class ShortcutsWebviewProvider {
         const hasSeenGridTutorial = this._globalState.get('hasSeenGridTutorial') || false;
 
         this._lastDataPayload = {
-            command: 'initData',
+            command: IPC_COMMANDS.INIT_DATA,
             shortcutsData: shortcuts,
             settings: settings,
             hiddenExtensions: hiddenExtensions,
